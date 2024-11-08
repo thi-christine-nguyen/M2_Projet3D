@@ -53,13 +53,13 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
-# TP1
+# main
 file( GLOB IMGUIC imgui/*.cpp) 
 file( GLOB IMGUIH imgui/*.h) 
-add_executable(TP1
-        TP1/TP1.cpp
-		TP1/Camera/Camera.hpp
-		TP1/Camera/Camera_Helper.hpp
+add_executable(main
+        code/main.cpp
+		code/Camera/Camera.hpp
+		code/Camera/Camera_Helper.hpp
 
 	common/shader.cpp
 	common/shader.hpp
@@ -75,17 +75,17 @@ add_executable(TP1
 	common/stb_image.hpp
 
 	
-        TP1/vertex_shader.glsl
-        TP1/fragment_shader.glsl
+        code/vertex_shader.glsl
+        code/fragment_shader.glsl
 					${IMGUIH}
 					${IMGUIC}
 )
-target_link_libraries(TP1
+target_link_libraries(main
 	${ALL_LIBS}
 )
 # Xcode and Visual working directories
-set_target_properties(TP1 PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/TP1/")
-create_target_launcher(TP1 WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/TP1/")
+set_target_properties(main PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/code/")
+create_target_launcher(main WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/code/")
 
 
 
@@ -97,8 +97,8 @@ SOURCE_GROUP(shaders REGULAR_EXPRESSION ".*/.*shader$" )
 
 if (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 add_custom_command(
-   TARGET TP1 POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/TP1${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/TP1/"
+   TARGET main POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/main${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/code/"
 )
 elseif (${CMAKE_GENERATOR} MATCHES "Xcode" )
 
