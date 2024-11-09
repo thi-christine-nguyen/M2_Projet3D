@@ -95,7 +95,7 @@ int main( void )
     GLuint bitangentbuffer;
 
     // Create and compile our GLSL program from the shaders
-    programID = LoadShaders( "vertex_shader.glsl", "fragment_shader.glsl" );
+    programID = LoadShaders("vertex_shader.glsl", "fragment_shader.glsl" );
     Interface interface(programID, SM, PM, IM); 
     glUseProgram(programID);
 
@@ -105,10 +105,7 @@ int main( void )
     GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 1, "../data/textures/ball.png", programID); 
     
     cube->setInitalTransform(cube->getTransform()); 
-
-
-
-
+    
     // Ajout des GameObjects au SceneManager
     SM->addObject(std::move(cube->ptr));
     // SM->addObject(std::move(landscape->ptr));
