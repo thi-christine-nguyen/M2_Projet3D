@@ -2,11 +2,7 @@
 #include "Camera/Camera.hpp"
 #include "PhysicManager.hpp"
 #include "InputManager.hpp"
-#include "Player.hpp"
 #include "GameObject.hpp"
-#include "Objects/Sphere.hpp"
-#include "Objects/Plane.hpp"
-#include "Objects/Cube.hpp"
 #include "Interface.hpp"
 
 #include <imgui/imgui.h>
@@ -39,8 +35,8 @@ int main( void )
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
-    int window_width = static_cast<int>(mode->width * 0.8);
-    int window_height = static_cast<int>(mode->height * 1);
+    int window_width = static_cast<int>(mode->width * 0.5);
+    int window_height = static_cast<int>(mode->height * 0.8);
 
     // Open a window and create its OpenGL context
     char title[50] = "Projet 3D - Voxelisation";
@@ -106,8 +102,12 @@ int main( void )
     //----------------------------------------- Init -----------------------------------------//
 
     // Création des différents GameObjects
-    GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 0, "../data/textures/cubeTexture.png", programID); 
+    GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 1, "../data/textures/ball.png", programID); 
+    
     cube->setInitalTransform(cube->getTransform()); 
+
+
+
 
     // Ajout des GameObjects au SceneManager
     SM->addObject(std::move(cube->ptr));

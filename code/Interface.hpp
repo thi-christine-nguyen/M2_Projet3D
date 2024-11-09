@@ -11,11 +11,7 @@
 #include "SceneManager.hpp"
 #include "PhysicManager.hpp"
 #include "InputManager.hpp"
-#include "Objects/Sphere.hpp"
-#include "Objects/Plane.hpp"
-#include "Objects/Mesh.hpp"
-#include "Objects/Landscape.hpp"
-#include "Player.hpp"
+#include "Mesh.hpp"
 
 
 
@@ -68,7 +64,6 @@ public :
 
     void addGameObject(float _deltaTime, GLFWwindow* _window){
         static char name[128] = "";
-        static GameObjectType selectedType = SPHERE; 
         static int resolution;
         static int size;
         static std::string meshPath;
@@ -81,17 +76,11 @@ public :
 
         ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
 
-        // Boutons de radio pour choisir le type d'objet à créer
-        ImGui::Text("Select Object Type:");
-        ImGui::RadioButton("Sphere", reinterpret_cast<int*>(&selectedType), SPHERE);
-        ImGui::RadioButton("Mesh", reinterpret_cast<int*>(&selectedType), MESH);
-        ImGui::RadioButton("Plane", reinterpret_cast<int*>(&selectedType), PLANE);
-
         // Chemin pour le mesh
         if (ImGui::Button("Mesh Path")) {
             IGFD::FileDialogConfig config;
             config.path = ".";
-            ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshDlgKey", "Choose Mesh File", ".obj", config);
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshDlgKey", "Choose Mesh File", ".obj, .off", config);
         }
 
         if (ImGuiFileDialog::Instance()->Display("ChooseMeshDlgKey")) {
@@ -103,11 +92,6 @@ public :
 
         if (ImGui::Button("Annuler le mesh")){
             meshPath = ""; 
-        };
-
-        if(meshPath == ""){
-            ImGui::InputInt("Resolution", &resolution);
-            ImGui::InputInt("Size/Radius", &size);
         }
 
         ImGui::Text("Selected Mesh File: %s", meshPath.c_str());
@@ -124,6 +108,10 @@ public :
             }
 
             ImGuiFileDialog::Instance()->Close();
+        }
+        //Ajouter un bouton annuler texture
+        if (ImGui::Button("Annuler la texture")){
+            texturePath = ""; 
         }
 
         ImGui::Text("Selected Texture File: %s", texturePath.c_str());
@@ -171,41 +159,30 @@ public :
         if (ImGui::Button("Add Object")) {
 
             glActiveTexture(GL_TEXTURE0);
-            GLuint textureID = loadTexture2DFromFilePath(texturePath); 
+            GLuint textureID; 
+            
+            if(texturePath == ""){
+                textureID = 0; 
+            }else{
+                textureID = loadTexture2DFromFilePath(texturePath); 
+            }
             glUniform1i(glGetUniformLocation(programID, "gameObjectTexture"), 0);
 
             GameObject* newObject;
-            
-            switch (selectedType) {
-                case SPHERE :
-                    newObject = new Sphere(name, resolution, size, textureID, texturePath.c_str(), programID);
-                    break;
-
-                case MESH:
-                    newObject = new Mesh(name, meshPath.c_str(), textureID, texturePath.c_str(), programID);
-                    break;
-
-                case PLANE:
-                    newObject = new Plane(name, resolution, size, textureID, texturePath.c_str(), programID);
-                    break;
+          
+            newObject = new Mesh(name, meshPath.c_str(), textureID, texturePath.c_str(), programID);
+             
+        
+            newObject->setTransform(transform); 
+            newObject->setInitalTransform(transform); 
+            if(physic == true){
+                newObject->setWeight(poids); 
+                PM->addObject(newObject); 
             }
 
-            if(selectedType != SPHERE){
-                newObject->setTransform(transform); 
-                newObject->setInitalTransform(transform); 
-                if(physic == true){
-                    newObject->setWeight(poids); 
-                    PM->addObject(newObject); 
-                    
-                }
-
-                SM->addObject(std::move(newObject->ptr));
-            }
-
+            SM->addObject(std::move(newObject->ptr));
             name[0] = '\0';
-            resolution = 0; 
-            size = 0; 
-            selectedType = SPHERE;
+          
         }
     }
 
