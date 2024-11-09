@@ -75,6 +75,7 @@ protected:
     std::vector<unsigned short> indices;
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec2> uvs;
+    std::vector<glm::vec3> normals;
     glm::vec4 color {1.f, 1.f, 1.f, 1.f};
 
     // PHYSICS

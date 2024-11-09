@@ -14,7 +14,6 @@
 #include <vector>
 
 #include "variables.hpp"
-#include "Player.hpp"
 
 void targetMesh(std::vector<glm::vec3> &indexed_vertices );
 

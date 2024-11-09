@@ -104,7 +104,7 @@ public:
         // m_savedEulerAngle = m_eulerAngle;
 		m_savedRotation = m_rotation;
 		if (saveInputMode) {
-			std::cout << saveInputMode << std::endl;
+			// std::cout << saveInputMode << std::endl;
         	m_savedInputMode = m_inputMode;
 		}
         m_stateSaved = true;

@@ -11,11 +11,7 @@
 #include "SceneManager.hpp"
 #include "PhysicManager.hpp"
 #include "InputManager.hpp"
-#include "Objects/Sphere.hpp"
-#include "Objects/Plane.hpp"
-#include "Objects/Mesh.hpp"
-#include "Objects/Landscape.hpp"
-#include "Player.hpp"
+#include "Mesh.hpp"
 
 
 
@@ -68,7 +64,6 @@ public :
 
     void addGameObject(float _deltaTime, GLFWwindow* _window){
         static char name[128] = "";
-        static GameObjectType selectedType = SPHERE; 
         static int resolution;
         static int size;
         static std::string meshPath;
@@ -78,20 +73,15 @@ public :
         static float poids = 0; 
         static Transform transform; 
         static bool scaleLocked_ = false; 
+        static glm::vec4 color = {1.f, 1.f, 1.f, 1.f};
 
         ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
-
-        // Boutons de radio pour choisir le type d'objet à créer
-        ImGui::Text("Select Object Type:");
-        ImGui::RadioButton("Sphere", reinterpret_cast<int*>(&selectedType), SPHERE);
-        ImGui::RadioButton("Mesh", reinterpret_cast<int*>(&selectedType), MESH);
-        ImGui::RadioButton("Plane", reinterpret_cast<int*>(&selectedType), PLANE);
 
         // Chemin pour le mesh
         if (ImGui::Button("Mesh Path")) {
             IGFD::FileDialogConfig config;
             config.path = ".";
-            ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshDlgKey", "Choose Mesh File", ".obj", config);
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshDlgKey", "Choose Mesh File", ".obj, .off", config);
         }
 
         if (ImGuiFileDialog::Instance()->Display("ChooseMeshDlgKey")) {
@@ -101,13 +91,12 @@ public :
             ImGuiFileDialog::Instance()->Close();
         }
 
-        if (ImGui::Button("Annuler le mesh")){
-            meshPath = ""; 
-        };
+        if(meshPath != ""){
+            
+            if (ImGui::Button("Annuler le mesh")){
+                meshPath = ""; 
+            }
 
-        if(meshPath == ""){
-            ImGui::InputInt("Resolution", &resolution);
-            ImGui::InputInt("Size/Radius", &size);
         }
 
         ImGui::Text("Selected Mesh File: %s", meshPath.c_str());
@@ -125,8 +114,43 @@ public :
 
             ImGuiFileDialog::Instance()->Close();
         }
+        if(texturePath != ""){
+
+            if (ImGui::Button("Annuler le texture")){
+                texturePath = ""; 
+            }
+
+        }
+      
 
         ImGui::Text("Selected Texture File: %s", texturePath.c_str());
+
+        if (texturePath == "") {
+            ImGui::Text("Color RGB (0-256)");
+            static int colorRGB[3] = {255, 255, 255};
+
+            // Champs de saisie pour chaque composant RGB, valeurs de 0 à 256
+            ImGui::InputInt("Red", &colorRGB[0], 1, 10, ImGuiInputTextFlags_CharsDecimal);
+            ImGui::InputInt("Green", &colorRGB[1], 1, 10, ImGuiInputTextFlags_CharsDecimal);
+            ImGui::InputInt("Blue", &colorRGB[2], 1, 10, ImGuiInputTextFlags_CharsDecimal);
+
+            // S'assurer que les valeurs sont dans la plage [0, 256]
+            colorRGB[0] = glm::clamp(colorRGB[0], 0, 256);
+            colorRGB[1] = glm::clamp(colorRGB[1], 0, 256);
+            colorRGB[2] = glm::clamp(colorRGB[2], 0, 256);
+
+            // Affichage de la couleur résultante avec les valeurs RGB
+            ImGui::Text("Selected ColorRGB: R%d G%d B%d", colorRGB[0], colorRGB[1], colorRGB[2]);
+
+            // Si vous devez les utiliser dans un shader ou pour des calculs, vous pouvez normaliser
+            // Divisez chaque composant par 255.0f pour obtenir une valeur dans la plage [0, 1]
+            float normalizedColor[3] = {
+                color[0] = colorRGB[0] / 255.0f,
+                color[1] = colorRGB[1] / 255.0f,
+                color[2] = colorRGB[2] / 255.0f
+            };
+        }
+
 
         // Ajustement du transform de base
         ImGui::Text("Position");
@@ -165,47 +189,39 @@ public :
             ImGui::Text("Poids de l'objet");
             ImGui::SliderFloat("Poids", &poids, 0.0f, 10.0f);
         }
-
         
         // Création de l'objet
         if (ImGui::Button("Add Object")) {
 
             glActiveTexture(GL_TEXTURE0);
-            GLuint textureID = loadTexture2DFromFilePath(texturePath); 
+            GLuint textureID; 
+            
+            if(texturePath == ""){
+                textureID = 0; 
+                
+            }else{
+                textureID = loadTexture2DFromFilePath(texturePath); 
+            }
             glUniform1i(glGetUniformLocation(programID, "gameObjectTexture"), 0);
 
             GameObject* newObject;
-            
-            switch (selectedType) {
-                case SPHERE :
-                    newObject = new Sphere(name, resolution, size, textureID, texturePath.c_str(), programID);
-                    break;
-
-                case MESH:
-                    newObject = new Mesh(name, meshPath.c_str(), textureID, texturePath.c_str(), programID);
-                    break;
-
-                case PLANE:
-                    newObject = new Plane(name, resolution, size, textureID, texturePath.c_str(), programID);
-                    break;
+          
+            newObject = new Mesh(name, meshPath.c_str(), textureID, texturePath.c_str(), programID);
+            if(textureID == 0){
+                newObject->setColor(color);  
+            }
+             
+        
+            newObject->setTransform(transform); 
+            newObject->setInitalTransform(transform); 
+            if(physic == true){
+                newObject->setWeight(poids); 
+                PM->addObject(newObject); 
             }
 
-            if(selectedType != SPHERE){
-                newObject->setTransform(transform); 
-                newObject->setInitalTransform(transform); 
-                if(physic == true){
-                    newObject->setWeight(poids); 
-                    PM->addObject(newObject); 
-                    
-                }
-
-                SM->addObject(std::move(newObject->ptr));
-            }
-
+            SM->addObject(std::move(newObject->ptr));
             name[0] = '\0';
-            resolution = 0; 
-            size = 0; 
-            selectedType = SPHERE;
+          
         }
     }
 
@@ -250,8 +266,6 @@ public :
             camera.restoreState();       // Restauration de l'état initial
         }
     }
-
-
 
 }; 
 #endif
