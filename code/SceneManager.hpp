@@ -16,6 +16,7 @@ public:
 
     // Méthode pour ajouter un objet à la scène
     void addObject(std::unique_ptr<GameObject> object) {
+        object->setId(objects.size()); 
         objects.push_back(std::move(object)); // std::move permet de transférer la responsabilité de gestion de l'objet au SceneManager
     }
 
