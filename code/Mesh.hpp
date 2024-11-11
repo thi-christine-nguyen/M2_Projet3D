@@ -17,6 +17,8 @@ public:
     std::string newtexturePath;
     GLuint programID; 
 
+
+
     Mesh() {}
 
     Mesh(std::string name, const char *path, int textureID, const char *texturePath, GLuint programID = 0) {
@@ -155,12 +157,9 @@ public:
         return true;
     }
 
- 
-
     void updateInterfaceTransform(float _deltaTime){
         
-        
-        ImGui::Checkbox(("##" + std::to_string(id) + " Mode édition").c_str(), &editMode);
+        ImGui::Checkbox(("Mode Edition ##" + std::to_string(id) ).c_str(), &editMode);
         if (editMode) {
             
             ImGui::Text("Edition des Propriétés de l'Objet");
@@ -173,22 +172,20 @@ public:
             }
 
             // Modification du mesh 
-            if (ImGui::Button("Sélectionner le Mesh")) {
+            if (ImGui::Button(("Sélectionner le Mesh ##" + std::to_string(id)).c_str())) {
                 IGFD::FileDialogConfig config;
                 config.path = ".";
-                ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshDlgKey", "Choose Mesh File", ".obj,.off", config);
+                ImGuiFileDialog::Instance()->OpenDialog(("##" + std::to_string(id) + " Mesh").c_str(), "Choose Mesh File", ".obj,.off", config);
             }
 
-            // Afficher la boîte de dialogue pour choisir le fichier de mesh
-            if (ImGuiFileDialog::Instance()->Display("ChooseMeshDlgKey")) {
+            if (ImGuiFileDialog::Instance()->Display(("##" + std::to_string(id) + " Mesh").c_str())) {
                 if (ImGuiFileDialog::Instance()->IsOk()) {
-                    meshPath = ImGuiFileDialog::Instance()->GetFilePathName(); // Obtenir le chemin du fichier sélectionné
+                    meshPath = ImGuiFileDialog::Instance()->GetFilePathName();
                     indices.clear();
                     vertices.clear();
                     uvs.clear();
                     normals.clear();
-                    // this->DeleteBuffers(programID); 
-                    loadModel(meshPath.c_str()); 
+                    loadModel(meshPath.c_str());
                     this->GenerateBuffers(programID);
                     this->initBoundingBox();
                 }
@@ -197,107 +194,70 @@ public:
 
             ImGui::Text("Selected Mesh File: %s", meshPath.c_str());
 
+            // Modification de la texture
+            if (ImGui::Button(("Sélectionner la Texture ##" + std::to_string(id)).c_str())) {
+                IGFD::FileDialogConfig config;
+                config.path = ".";
+                ImGuiFileDialog::Instance()->OpenDialog(("##" + std::to_string(id) + " Texture").c_str(), "Choose Texture File", ".png,.jpg,.bmp", config);
+            }
 
+            if (ImGuiFileDialog::Instance()->Display(("##" + std::to_string(id) + " Texture").c_str())) {
+                if (ImGuiFileDialog::Instance()->IsOk()) {
+                    newtexturePath = ImGuiFileDialog::Instance()->GetFilePathName();
+                    textureID = loadTexture2DFromFilePath(newtexturePath.c_str());
+                    glUniform1i(glGetUniformLocation(programID, "gameObjectTexture"), 0);
+                }
+                ImGuiFileDialog::Instance()->Close();
+            }
 
-            // std::string texture; 
-            // // Chemin pour la texture
-            // if (ImGui::Button("Texture Path")) {
-            //     IGFD::FileDialogConfig config;
-            //     config.path = ".";
-            //     ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgTextureKey", "Choose File", ".png, .jpg, .bmp", config);
-            // }
-            // if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgTextureKey")) {
-            //     if (ImGuiFileDialog::Instance()->IsOk()) { // action if OK
-                    
-            //         texture = ImGuiFileDialog::Instance()->GetFilePathName();
-                    
-            //         std::cout << texture << std::endl; 
-            //         GLuint textureID = loadTexture2DFromFilePath(texture);
-            //         texturePath = texture.c_str(); 
-            //         initTexture(programID);
-                 
-                    
-            //     }
-            //     ImGuiFileDialog::Instance()->Close();
-            // }
-            // // if(texturePath != ""){
+            if(texturePath != ""){
+                if (ImGui::Button(("Annuler le texture ##" + std::to_string(id)).c_str())){
+                    newtexturePath = ""; 
+                    textureID = 0; 
+                }
+            }
 
-            // //     if (ImGui::Button("Annuler le texture")){
-            // //         texturePath = ""; 
-            // //     }
+            ImGui::Text("Selected Texture File: %s", newtexturePath.c_str());
 
-            // // }
+            if (newtexturePath.empty()) {
+                ImGui::Text("Couleur RGB (0-256)");
+                static float colorWheel[3] = {1.0f, 1.0f, 1.0f};  // Valeurs normalisées de 0 à 1
+                static bool colorPopupOpen = false;
 
-            // ImGui::Text("Selected Texture File: %s", texture.c_str());
+                // Bouton pour ouvrir la roue de couleurs
+                if (ImGui::Button(("Choisir une couleur ##" + std::to_string(id)).c_str())) {
+                    ImGui::OpenPopup("ColorPickerPopup");
+                }
 
-            // if (newtexturePath.empty()) {
-            //     ImGui::Text("Couleur RGB (0-256)");
-            //     static float colorWheel[3] = {1.0f, 1.0f, 1.0f};  // Valeurs normalisées de 0 à 1
-            //     static bool colorPopupOpen = false;
+                // Pop-up de sélection de couleur
+                if (ImGui::BeginPopup("ColorPickerPopup")) {
+                    ImGui::Text("Sélectionnez une couleur");
+                    ImGui::Separator();
 
-            //     // Bouton pour ouvrir la roue de couleurs
-            //     if (ImGui::Button("Choisir une couleur")) {
-            //         ImGui::OpenPopup("ColorPickerPopup");
-            //     }
+                    // Affiche la roue de couleur
+                    ImGui::ColorPicker3("Couleur", colorWheel);
 
-            //     // Pop-up de sélection de couleur
-            //     if (ImGui::BeginPopup("ColorPickerPopup")) {
-            //         ImGui::Text("Sélectionnez une couleur");
-            //         ImGui::Separator();
+                    ImGui::Separator();
+                    if (ImGui::Button(("OK ##" + std::to_string(id)).c_str(), ImVec2(120, 0))) {
+                        color[0] = colorWheel[0]; 
+                        color[1] = colorWheel[1]; 
+                        color[2] = colorWheel[2]; 
+                        ImGui::CloseCurrentPopup();
+                    }
 
-            //         // Affiche la roue de couleur
-            //         ImGui::ColorPicker3("Couleur", colorWheel);
+                    ImGui::EndPopup();
+                }
+                int colorRGB[3] = {
+                    static_cast<int>(color[0] * 255),
+                    static_cast<int>(color[1] * 255),
+                    static_cast<int>(color[2] * 255)
+                };
+                ImGui::Text("Couleur sélectionnée : R%d G%d B%d", colorRGB[0], colorRGB[1], colorRGB[2]);
+            }
 
-            //         ImGui::Separator();
-            //         if (ImGui::Button("OK", ImVec2(120, 0))) {
-            //             color[0] = colorWheel[0]; 
-            //             color[1] = colorWheel[1]; 
-            //             color[2] = colorWheel[2]; 
-            //             ImGui::CloseCurrentPopup();
-            //         }
-
-            //         ImGui::EndPopup();
-            //     }
-
-            //     int colorRGB[3] = {
-            //         static_cast<int>(color[0] * 255),
-            //         static_cast<int>(color[1] * 255),
-            //         static_cast<int>(color[2] * 255)
-            //     };
-            //     ImGui::Text("Couleur sélectionnée : R%d G%d B%d", colorRGB[0], colorRGB[1], colorRGB[2]);
-            // }
-
-
-            
-            // // Sélection du chemin du mesh
-            // char meshPathBuffer[256];
-            // strncpy(meshPathBuffer, meshPath.c_str(), sizeof(meshPathBuffer));
-            // if (ImGui::InputText(("Chemin du Mesh##"  + std::to_string(id)).c_str(), meshPathBuffer, sizeof(meshPathBuffer))) {
-            //     meshPath = std::string(meshPathBuffer);
-            // }
-
-            // // Sélection du chemin de la texture
-            // static char texturePathBuffer[256];
-            // strncpy(texturePathBuffer, texturePath.c_str(), sizeof(texturePathBuffer));
-            // if (ImGui::InputText("Chemin de la Texture", texturePathBuffer, sizeof(texturePathBuffer))) {
-            //     texturePath = std::string(texturePathBuffer);
-            // }
-
-            // // Sélection de la couleur si pas de texture
-            // if (texturePath.empty()) {
-            //     ImGui::Text("Couleur RGB");
-            //     static float colorWheel[3] = {1.0f, 1.0f, 1.0f};
-            //     if (ImGui::ColorEdit3("Couleur", colorWheel)) {
-            //         color[0] = colorWheel[0];
-            //         color[1] = colorWheel[1];
-            //         color[2] = colorWheel[2];
-            //     }
-            // }
         }
         ImGui::Separator();
         GameObject::updateInterfaceTransform(_deltaTime);
-        
-        
         
     }
 

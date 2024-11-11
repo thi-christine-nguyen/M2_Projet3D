@@ -96,6 +96,7 @@ protected:
     // INTERFACE
     bool scaleLocked_ = false; 
     bool gravityEnabled_ = false;
+    bool isWireframe = false;
 
 public:
     /* ------------------------- CONSTRUCTOR -------------------------*/
@@ -319,6 +320,10 @@ public:
 
     virtual void draw() const
     {
+        if (isWireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
         
         glBindVertexArray(vao); // Bind le giga vecteur array
         // Envoi du type du GameObject
@@ -364,6 +369,10 @@ public:
         //  Desactiver les layouts après avoir dessiner
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
+
+        if (isWireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
     }
 
     /* ------------------------- TEXTURES -------------------------*/
@@ -570,6 +579,7 @@ public:
     }
 
     void updateInterfaceTransform(float _deltaTime) {
+
         
         ImGui::Text("Position");
         glm::vec3 position = transform.getPosition();
@@ -599,6 +609,8 @@ public:
             ImGui::SameLine();
             ImGui::Checkbox(("##" + std::to_string(id) + " GravityEnabled").c_str(), &gravityEnabled_);
         }
+        ImGui::Checkbox(("Afficher en Wireframe ##" + std::to_string(id)).c_str(), &isWireframe);
+
 
         transform.setPosition(position);
         transform.setRotation(rotation);
