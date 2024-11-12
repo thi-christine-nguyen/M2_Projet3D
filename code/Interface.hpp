@@ -299,7 +299,7 @@ public :
 
     void update(float _deltaTime, GLFWwindow* _window){
         updateInterface(_deltaTime, _window);
-        bool isMenuFocused = ImGui::IsAnyItemHovered() || ImGui::IsWindowHovered(ImGuiFocusedFlags_AnyWindow);
+        bool isMenuFocused = ImGui::IsAnyItemHovered() || ImGui::IsWindowHovered(ImGuiFocusedFlags_AnyWindow | ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) ;
 
         // Si le menu est en focus et l'état n'est pas sauvegardé, on sauvegarde l'état
         if (isMenuFocused && !camera.m_stateSaved) {
