@@ -53,6 +53,7 @@ protected:
     Transform initialTransform; 
     GameObjectType type; // Type du GameObject
     std::string name; // Nom et identifiant de l'objet
+    int id; 
 
     // HIERARCHY
     std::vector<GameObject*> children;  // Liste des enfants de cet objet
@@ -95,6 +96,7 @@ protected:
     // INTERFACE
     bool scaleLocked_ = false; 
     bool gravityEnabled_ = false;
+    bool isWireframe = false;
 
 public:
     /* ------------------------- CONSTRUCTOR -------------------------*/
@@ -145,6 +147,7 @@ public:
     const Transform& getTransform() const {
         return transform;
     }
+
 
     // Méthode pour définir la transformation de cet objet
     void setTransform(const Transform& newTransform) {
@@ -260,6 +263,10 @@ public:
         return glm::vec3(pos);
     }
 
+    int setId(int _id){
+        id = _id;
+    }
+
 
 
     /* ------------------------- TRANSFORMATIONS -------------------------*/
@@ -313,6 +320,10 @@ public:
 
     virtual void draw() const
     {
+        if (isWireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
         
         glBindVertexArray(vao); // Bind le giga vecteur array
         // Envoi du type du GameObject
@@ -358,6 +369,10 @@ public:
         //  Desactiver les layouts après avoir dessiner
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
+
+        if (isWireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
     }
 
     /* ------------------------- TEXTURES -------------------------*/
@@ -565,47 +580,47 @@ public:
 
     void updateInterfaceTransform(float _deltaTime) {
 
-       
+        
         ImGui::Text("Position");
         glm::vec3 position = transform.getPosition();
-        ImGui::DragFloat3(("##" + name + "Position").c_str(), glm::value_ptr(position));
+        ImGui::DragFloat3(("##" + std::to_string(id) + "Position").c_str(), glm::value_ptr(position));
 
         glm::vec3 rotation = transform.getRotation();
         ImGui::Text("Rotation");
-        ImGui::DragFloat3(("##" + name + "Rotation").c_str(), glm::value_ptr(rotation));
+        ImGui::DragFloat3(("##" + std::to_string(id) + "Rotation").c_str(), glm::value_ptr(rotation));
 
         glm::vec3 scale = transform.getScale();
-
         ImGui::Text("Lock Scale");
         ImGui::SameLine();
-        ImGui::Checkbox(("##" + name + "LockScale").c_str(), &scaleLocked_);
+        ImGui::Checkbox(("##" + std::to_string(id) + "LockScale").c_str(), &scaleLocked_);
 
         if (scaleLocked_) {
-           
             ImGui::Text("Scale");
-            ImGui::DragFloat((std::string("##") + name + "Scale").c_str(), &scale.x, 0.1f, 0.0f, FLT_MAX);
+            ImGui::DragFloat((std::string("##") + std::to_string(id) + "Scale").c_str(), &scale.x, 0.1f, 0.0f, FLT_MAX);
             scale.y = scale.x;
             scale.z = scale.x;
         } else {
             ImGui::Text("Scale x, y, z");
-            ImGui::DragFloat3((std::string("##") + name + "Scale").c_str(), glm::value_ptr(scale), 0.1f, 0.0f, FLT_MAX);
-
+            ImGui::DragFloat3((std::string("##") + std::to_string(id) + "Scale").c_str(), glm::value_ptr(scale), 0.1f, 0.0f, FLT_MAX);
         }
-        if(hasPhysic == true){
+
+        if (hasPhysic) {
             ImGui::Text("Gravity Enabled");
             ImGui::SameLine();
-            ImGui::Checkbox(("##" + name + " GravityEnabled").c_str(), &gravityEnabled_);
+            ImGui::Checkbox(("##" + std::to_string(id) + " GravityEnabled").c_str(), &gravityEnabled_);
         }
-      
+        ImGui::Checkbox(("Afficher en Wireframe ##" + std::to_string(id)).c_str(), &isWireframe);
+
 
         transform.setPosition(position);
         transform.setRotation(rotation);
         transform.setScale(scale);
 
-        if (ImGui::Button(("Reset " + name + " Parameters").c_str())) {
+        if (ImGui::Button(("Reset " + std::to_string(id) + " Parameters").c_str())) {
             resetParameters();
         }
     }
+
 
 
 };

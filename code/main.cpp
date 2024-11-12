@@ -103,11 +103,14 @@ int main( void )
 
     // Création des différents GameObjects
     GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 1, "../data/textures/ball.png", programID); 
+    GameObject *cube2 = new Mesh("cube2", "../data/meshes/cube.obj", 2, "../data/textures/terrain.png", programID); 
     
     cube->setInitalTransform(cube->getTransform()); 
+    cube2->setInitalTransform(cube->getTransform()); 
     
     // Ajout des GameObjects au SceneManager
     SM->addObject(std::move(cube->ptr));
+    SM->addObject(std::move(cube2->ptr));
     // SM->addObject(std::move(landscape->ptr));
 
     // Ajout des GameObjects au PhysicManager

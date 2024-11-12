@@ -63,7 +63,11 @@ public :
     }
 
     void addGameObject(float _deltaTime, GLFWwindow* _window){
-        static char name[128] = "";
+        static char name[128]; 
+        if (name[0] == '\0') {
+            std::snprintf(name, sizeof(name), "Objet %zu", SM->getObjects().size() + 1);
+        }
+
         static int resolution;
         static int size;
         static std::string meshPath;
@@ -125,30 +129,41 @@ public :
 
         ImGui::Text("Selected Texture File: %s", texturePath.c_str());
 
-        if (texturePath == "") {
-            ImGui::Text("Color RGB (0-256)");
-            static int colorRGB[3] = {255, 255, 255};
+        if (texturePath.empty()) {
+            ImGui::Text("Couleur RGB (0-256)");
+            static float colorWheel[3] = {1.0f, 1.0f, 1.0f};  // Valeurs normalisées de 0 à 1
+            static bool colorPopupOpen = false;
 
-            // Champs de saisie pour chaque composant RGB, valeurs de 0 à 256
-            ImGui::InputInt("Red", &colorRGB[0], 1, 10, ImGuiInputTextFlags_CharsDecimal);
-            ImGui::InputInt("Green", &colorRGB[1], 1, 10, ImGuiInputTextFlags_CharsDecimal);
-            ImGui::InputInt("Blue", &colorRGB[2], 1, 10, ImGuiInputTextFlags_CharsDecimal);
+            // Bouton pour ouvrir la roue de couleurs
+            if (ImGui::Button("Choisir une couleur")) {
+                ImGui::OpenPopup("ColorPickerPopup");
+            }
 
-            // S'assurer que les valeurs sont dans la plage [0, 256]
-            colorRGB[0] = glm::clamp(colorRGB[0], 0, 256);
-            colorRGB[1] = glm::clamp(colorRGB[1], 0, 256);
-            colorRGB[2] = glm::clamp(colorRGB[2], 0, 256);
+            // Pop-up de sélection de couleur
+            if (ImGui::BeginPopup("ColorPickerPopup")) {
+                ImGui::Text("Sélectionnez une couleur");
+                ImGui::Separator();
 
-            // Affichage de la couleur résultante avec les valeurs RGB
-            ImGui::Text("Selected ColorRGB: R%d G%d B%d", colorRGB[0], colorRGB[1], colorRGB[2]);
+                // Affiche la roue de couleur
+                ImGui::ColorPicker3("Couleur", colorWheel);
 
-            // Si vous devez les utiliser dans un shader ou pour des calculs, vous pouvez normaliser
-            // Divisez chaque composant par 255.0f pour obtenir une valeur dans la plage [0, 1]
-            float normalizedColor[3] = {
-                color[0] = colorRGB[0] / 255.0f,
-                color[1] = colorRGB[1] / 255.0f,
-                color[2] = colorRGB[2] / 255.0f
+                ImGui::Separator();
+                if (ImGui::Button("OK", ImVec2(120, 0))) {
+                    color[0] = colorWheel[0]; 
+                    color[1] = colorWheel[1]; 
+                    color[2] = colorWheel[2]; 
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::EndPopup();
+            }
+
+            int colorRGB[3] = {
+                static_cast<int>(color[0] * 255),
+                static_cast<int>(color[1] * 255),
+                static_cast<int>(color[2] * 255)
             };
+            ImGui::Text("Couleur sélectionnée : R%d G%d B%d", colorRGB[0], colorRGB[1], colorRGB[2]);
         }
 
 
@@ -195,50 +210,77 @@ public :
 
             glActiveTexture(GL_TEXTURE0);
             GLuint textureID; 
+
+            // Si pas de mesh en entrée alors erreur
+            if (meshPath.empty()) {
+                ImGui::OpenPopup("ErreurMesh");
+            } else {
             
-            if(texturePath == ""){
-                textureID = 0; 
-                
-            }else{
-                textureID = loadTexture2DFromFilePath(texturePath); 
+                GLuint textureID = texturePath.empty() ? 0 : loadTexture2DFromFilePath(texturePath);
+                glUniform1i(glGetUniformLocation(programID, "gameObjectTexture"), 0);
+                GameObject* newObject;
+            
+                newObject = new Mesh(name, meshPath.c_str(), textureID, texturePath.c_str(), programID);
+                if(textureID == 0){
+                    newObject->setColor(color);  
+                }
+                newObject->setTransform(transform); 
+                newObject->setInitalTransform(transform); 
+                if(physic == true){
+                    newObject->setWeight(poids); 
+                    PM->addObject(newObject); 
+                }
+                SM->addObject(std::move(newObject->ptr));
+                name[0] = '\0';
             }
-            glUniform1i(glGetUniformLocation(programID, "gameObjectTexture"), 0);
-
-            GameObject* newObject;
           
-            newObject = new Mesh(name, meshPath.c_str(), textureID, texturePath.c_str(), programID);
-            if(textureID == 0){
-                newObject->setColor(color);  
-            }
-             
-        
-            newObject->setTransform(transform); 
-            newObject->setInitalTransform(transform); 
-            if(physic == true){
-                newObject->setWeight(poids); 
-                PM->addObject(newObject); 
+        }
+
+        if (ImGui::BeginPopupModal("ErreurMesh", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::Text("Erreur: Aucun mesh sélectionné.\nVeuillez choisir un fichier mesh avant de créer l'objet.");
+            ImGui::Separator();
+
+            if (ImGui::Button("OK", ImVec2(120, 0))) {
+                ImGui::CloseCurrentPopup();
             }
 
-            SM->addObject(std::move(newObject->ptr));
-            name[0] = '\0';
-          
+            ImGui::EndPopup();
         }
     }
 
     void updateInterface(float _deltaTime, GLFWwindow* _window)
 	{
+
         if (ImGui::Begin("Interface")){
             if (ImGui::BeginTabBar("Tabs")) {
                 camera.updateInterfaceCamera(_deltaTime); 
             }
-            if (ImGui::BeginTabItem("Objects"))
-            {
-                for (const auto& object : SM->getObjects()) {
+            if (ImGui::BeginTabItem("Objects")) {
+                for (auto& object : SM->getObjects()) {
                     std::string objectName = object->getName();
-                    if (ImGui::CollapsingHeader(objectName.c_str())) {
+                    Mesh* meshObject = dynamic_cast<Mesh*>(object.get());
+                    
+                    
+                    // Utiliser un bool pour suivre l'état du collapsable
+                    static std::unordered_map<std::string, bool> collapsingState;
+                    if (collapsingState.find(objectName) == collapsingState.end()) {
+                        collapsingState[objectName] = true; // Définir l'état par défaut (ouvert)
+                    }
+
+                    // Gérer le collapsing avec un bool spécifique à chaque objet
+                    bool isOpen = ImGui::CollapsingHeader(objectName.c_str(), 
+                            ImGuiTreeNodeFlags_DefaultOpen * collapsingState[objectName]);
+
+                    // Si l'état de l'élément change, on le met à jour
+                    if (isOpen != collapsingState[objectName]) {
+                        collapsingState[objectName] = isOpen;
+                    }
+
+                    if (isOpen) {
                         ImGui::Text("Object Name: %s", objectName.c_str());
                         // Récupère l'interface dans le gameObject pour la modification du transform
-                        object->updateInterfaceTransform(_deltaTime); 
+                        // object->updateInterfaceTransform(_deltaTime); 
+                        meshObject->updateInterfaceTransform(_deltaTime); 
                     }
                 }
                 if (ImGui::CollapsingHeader("Add")) {
@@ -252,9 +294,12 @@ public :
         ImGui::End();
     }
 
+
+    
+
     void update(float _deltaTime, GLFWwindow* _window){
         updateInterface(_deltaTime, _window);
-        bool isMenuFocused = ImGui::IsAnyItemHovered() || ImGui::IsWindowHovered(ImGuiFocusedFlags_AnyWindow);
+        bool isMenuFocused = ImGui::IsAnyItemHovered() || ImGui::IsWindowHovered(ImGuiFocusedFlags_AnyWindow | ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) ;
 
         // Si le menu est en focus et l'état n'est pas sauvegardé, on sauvegarde l'état
         if (isMenuFocused && !camera.m_stateSaved) {
