@@ -9,18 +9,15 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 
-#define HEIGHT 2048
-#define WIDTH 1536
+// /*******************************************************************************/
 
-/*******************************************************************************/
-
-void GLFW_Scroll_Callback(GLFWwindow* window, double xoffset, double yoffset) {
-    // Mettez à jour les informations de défilement dans ImGui
-    ImGuiIO& io = ImGui::GetIO();
-    io.MouseWheelH += (float)xoffset;  // Défilement horizontal
-    io.MouseWheel += (float)yoffset;   // Défilement vertical
-}
-// Exemple pour enregistrer le callback de défilement dans la fonction de création de la fenêtre GLFW
+// void GLFW_Scroll_Callback(GLFWwindow* window, double xoffset, double yoffset) {
+//     // Mettez à jour les informations de défilement dans ImGui
+//     ImGuiIO& io = ImGui::GetIO();
+//     io.MouseWheelH += (float)xoffset;  // Défilement horizontal
+//     io.MouseWheel += (float)yoffset;   // Défilement vertical
+// }
+// // Exemple pour enregistrer le callback de défilement dans la fonction de création de la fenêtre GLFW
 
 
 
@@ -71,13 +68,25 @@ int main( void )
     // glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     // Hide the mouse and enable unlimited mouvement
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    glfwSetScrollCallback(window, GLFW_Scroll_Callback);
+    // glfwSetScrollCallback(window, GLFW_Scroll_Callback);
  
 
 
     // Set the mouse at the center of the screen
     glfwPollEvents();
     glfwSetCursorPos(window, window_width/2, window_height/2);
+
+    // Initialisation de la caméra
+    glfwSetWindowUserPointer(window, &camera); // Associer le pointeur de l'objet Camera à la fenêtre
+
+    // glfwSetScrollCallback(window, [](GLFWwindow* window, double xOffset, double yOffset) {
+	// 	std::cout << "Scrolling " << xOffset << ", " << yOffset << std::endl;
+    //     // Récupérer l'instance de Camera associée à la fenêtre
+    //     Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+    //     if (camera) {
+    //         camera->scrollCallback(xOffset, yOffset); // Appeler la méthode de la classe Camera
+    //     }
+    // });
 
     // Dark blue background
     glClearColor(0.8f, 0.8f, 0.8f, 0.0f);
@@ -86,7 +95,6 @@ int main( void )
     glEnable(GL_DEPTH_TEST);
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
-
     // Cull triangles which normal is not towards the camera
     glEnable(GL_CULL_FACE);
 
@@ -108,8 +116,7 @@ int main( void )
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("vertex_shader.glsl", "fragment_shader.glsl" );
-    Interface interface(programID, SM, PM, IM); 
-
+    Interface interface(programID, SM, PM, IM, &camera); 
     glUseProgram(programID);
 
     //----------------------------------------- Init -----------------------------------------//
@@ -127,20 +134,14 @@ int main( void )
     SM->addObject(std::move(cube->ptr));
     SM->addObject(std::move(cube2->ptr));
 
-    // SM->addObject(std::move(landscape->ptr));
-
-    // Ajout des GameObjects au PhysicManager
-    PM->addObject(cube);
-    // PM->addObject(landscape);
-
     SM->initGameObjectsTexture();
 
     // Get a handle for our "LightPosition" uniform
     glUseProgram(programID);
     GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
+    // Init la fenêtre d'interface ImGUI
     interface.initImgui(window);
-    interface.camera.init();
 
     int t = 0; 
 
@@ -158,7 +159,7 @@ int main( void )
 
         if (totalDeltaTime >= 1) { // On mets à jour les FPS toutes les secondes
             float FPS = nbFrames / totalDeltaTime;
-            sprintf(title, "Moteur de jeux - TP4 Mouvements - (%.0f FPS)", FPS);
+            sprintf(title, "Projet 3D - Voxélisation - (%.0f FPS)", FPS);
             glfwSetWindowTitle(window, title);
             nbFrames = 0;
             totalDeltaTime = 0.;
@@ -176,28 +177,26 @@ int main( void )
         //Imgui 
         interface.createFrame();
 
-        // interface.camera.setCameraTarget(basketBall->getTransform().getPosition());
+        // camera.setCameraTarget(basketBall->getTransform().getPosition());
         interface.update(deltaTime, window);
-        interface.camera.update(deltaTime, window);
-        interface.camera.sendToShader(programID); 
+        camera.update(deltaTime, window);
+        camera.sendToShader(programID); 
         // Input gérés par l'InputManager
-        interface.IM->processInput(window, deltaTime);
+        IM->processInput(window, deltaTime);
         
         float updateTime = 1.0f/60.f;
 
         while (physicsClock >= updateTime) {
-
-            interface.SM->update(deltaTime);
-
+            SM->update(deltaTime);
             // Check des collisions entre le plan et les gameObjects
-            interface.PM->handleCollisions();
+            PM->handleCollisions();
 
             // std::cout << "PM tick" << std::endl;
             physicsClock -= updateTime;
         }
 
         // Affichage de tous les élements de la scène via le SceneManager
-        interface.SM->draw();
+        SM->draw();
         interface.renderFrame(); 
 
         // Swap buffers

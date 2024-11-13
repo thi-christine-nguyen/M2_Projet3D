@@ -35,7 +35,7 @@ private:
 	float		m_fovDegree{ 45.0f };
 	float		m_translationSpeed;
 	float 		m_rotationSpeed;
-	glm::vec3	m_position{ glm::vec3(0.f, 40.f, 0.f) };
+	glm::vec3	m_position{ glm::vec3(8.f, 40.f, 0.f) };
 	glm::vec3	m_eulerAngle{ glm::vec3(-90.f, 0.f, 0.f) };
 	glm::quat	m_rotation{};
 
@@ -79,7 +79,7 @@ public:
 	void init()
 	{
 		m_fovDegree = 45.0f;
-		m_position = glm::vec3(0.f, 40.f, 0.f);
+		m_position = glm::vec3(8.f, 40.f, 0.f);
 		m_eulerAngle = glm::vec3(glm::radians(-90.f), glm::radians(0.f), 0.f);
 		m_rotation = glm::quat{};
 		m_translationSpeed = 15.0f;
@@ -288,7 +288,7 @@ public:
 		glm::vec3 currentEulerAngles = m_eulerAngle;
 
 		// Définir les nouvelles valeurs pour la réinitialisation
-		glm::vec3 resetPosition = glm::vec3(0.f, 40.f, 0.f);
+		glm::vec3 resetPosition = glm::vec3(8.f, 40.f, 0.f);
 		glm::vec3 resetEulerAngles = glm::vec3(glm::radians(-90.f), 0.f, 0.f);
 
 		// Définir la durée de la transition
@@ -352,6 +352,11 @@ public:
         GLuint id_p = glGetUniformLocation(programID, "project_mat");
         glUniformMatrix4fv(id_p, 1, false, &mat_p[0][0]);
     }
+
+	void scrollCallback(double xOffset, double yOffset) {
+		m_translationSpeed += static_cast<float>(yOffset);
+		m_translationSpeed = glm::clamp(m_translationSpeed, 0.1f, 100.0f); // Limiter la vitesse
+	}
 
 };
 
