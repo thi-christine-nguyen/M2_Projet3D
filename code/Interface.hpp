@@ -44,11 +44,35 @@ public :
         ImGui_ImplOpenGL3_Init("#version 330");
     }
 
-    void createFrame(){
+    void createFrame() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        // Positionner la fenêtre ImGui à droite
+        ImGuiIO& io = ImGui::GetIO();
+        float interfaceWidth = 700.0f; // Largeur souhaitée pour l'interface
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - interfaceWidth, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(interfaceWidth, io.DisplaySize.y), ImGuiCond_Always);
+
+        // Commencer une nouvelle fenêtre ImGui avec le défilement activé
+        ImGui::Begin("Interface", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysUseWindowPadding);
+
+        // Contenu qui dépasse pour forcer le défilement
+        for (int i = 0; i < 100; i++) {
+            ImGui::Text("Item %d", i);
+        }
+
+        // Détecter si la molette a été utilisée et si Shift est enfoncé
+        if (io.MouseWheel != 0.0f && io.KeyShift) {
+            printf("Molette utilisée avec Shift !\n");
+        }
+
+        // Fin de la fenêtre
+        ImGui::End();
     }
+
+    
 
     void renderFrame(){
         ImGui::Render();
@@ -78,13 +102,14 @@ public :
         static Transform transform; 
         static bool scaleLocked_ = false; 
         static glm::vec4 color = {1.f, 1.f, 1.f, 1.f};
+        
 
         ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
 
         // Chemin pour le mesh
         if (ImGui::Button("Mesh Path")) {
             IGFD::FileDialogConfig config;
-            config.path = ".";
+            config.path = "../data/meshes";
             ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshDlgKey", "Choose Mesh File", ".obj, .off", config);
         }
 
@@ -108,7 +133,7 @@ public :
         // Chemin pour la texture
         if (ImGui::Button("Texture Path")) {
             IGFD::FileDialogConfig config;
-            config.path = ".";
+              config.path = "../data/textures";
             ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgTextureKey", "Choose File", ".png, .jpg, .bmp", config);
         }
         if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgTextureKey")) {
@@ -120,7 +145,7 @@ public :
         }
         if(texturePath != ""){
 
-            if (ImGui::Button("Annuler le texture")){
+            if (ImGui::Button("Annuler la texture")){
                 texturePath = ""; 
             }
 
@@ -294,21 +319,22 @@ public :
         ImGui::End();
     }
 
-
-    
+    void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+        ImGuiIO& io = ImGui::GetIO();
+        io.MouseWheel += static_cast<float>(yoffset); // Mettre à jour seulement pour le défilement vertical
+    }
 
     void update(float _deltaTime, GLFWwindow* _window){
         updateInterface(_deltaTime, _window);
         bool isMenuFocused = ImGui::IsAnyItemHovered() || ImGui::IsWindowHovered(ImGuiFocusedFlags_AnyWindow | ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) ;
-
-        // Si le menu est en focus et l'état n'est pas sauvegardé, on sauvegarde l'état
         if (isMenuFocused && !camera.m_stateSaved) {
-            camera.saveState();          // Sauvegarde de l'état actuel
-            camera.setInputMode(InputMode::Fixed); // Passage en mode fixe pour l'interface
+            camera.saveState();
+            camera.setInputMode(InputMode::Fixed); // Mode fixe pour l'interface
         }
+        
         // Si le menu perd le focus et que l'état a été sauvegardé, on restaure l'état
-        else if (!isMenuFocused && camera.m_stateSaved) {
-            camera.restoreState();       // Restauration de l'état initial
+        else if (camera.m_stateSaved) {
+            camera.restoreState();
         }
     }
 

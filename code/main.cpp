@@ -14,6 +14,15 @@
 
 /*******************************************************************************/
 
+void GLFW_Scroll_Callback(GLFWwindow* window, double xoffset, double yoffset) {
+    // Mettez à jour les informations de défilement dans ImGui
+    ImGuiIO& io = ImGui::GetIO();
+    io.MouseWheelH += (float)xoffset;  // Défilement horizontal
+    io.MouseWheel += (float)yoffset;   // Défilement vertical
+}
+// Exemple pour enregistrer le callback de défilement dans la fonction de création de la fenêtre GLFW
+
+
 
 int main( void )
 {
@@ -35,8 +44,8 @@ int main( void )
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
-    int window_width = static_cast<int>(mode->width * 0.5);
-    int window_height = static_cast<int>(mode->height * 0.8);
+    int window_width = static_cast<int>(mode->width * 0.8);
+    int window_height = static_cast<int>(mode->height * 1);
 
     // Open a window and create its OpenGL context
     char title[50] = "Projet 3D - Voxelisation";
@@ -62,6 +71,9 @@ int main( void )
     // glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     // Hide the mouse and enable unlimited mouvement
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetScrollCallback(window, GLFW_Scroll_Callback);
+ 
+
 
     // Set the mouse at the center of the screen
     glfwPollEvents();
@@ -97,6 +109,7 @@ int main( void )
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("vertex_shader.glsl", "fragment_shader.glsl" );
     Interface interface(programID, SM, PM, IM); 
+
     glUseProgram(programID);
 
     //----------------------------------------- Init -----------------------------------------//
@@ -104,13 +117,16 @@ int main( void )
     // Création des différents GameObjects
     GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 1, "../data/textures/ball.png", programID); 
     GameObject *cube2 = new Mesh("cube2", "../data/meshes/cube.obj", 2, "../data/textures/terrain.png", programID); 
+
+
     
     cube->setInitalTransform(cube->getTransform()); 
-    cube2->setInitalTransform(cube->getTransform()); 
+    cube2->setInitalTransform(cube2->getTransform()); 
     
     // Ajout des GameObjects au SceneManager
     SM->addObject(std::move(cube->ptr));
     SM->addObject(std::move(cube2->ptr));
+
     // SM->addObject(std::move(landscape->ptr));
 
     // Ajout des GameObjects au PhysicManager

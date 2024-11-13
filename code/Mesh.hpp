@@ -174,7 +174,7 @@ public:
             // Modification du mesh 
             if (ImGui::Button(("Sélectionner le Mesh ##" + std::to_string(id)).c_str())) {
                 IGFD::FileDialogConfig config;
-                config.path = ".";
+                config.path = "../data/meshes";
                 ImGuiFileDialog::Instance()->OpenDialog(("##" + std::to_string(id) + " Mesh").c_str(), "Choose Mesh File", ".obj,.off", config);
             }
 
@@ -197,7 +197,7 @@ public:
             // Modification de la texture
             if (ImGui::Button(("Sélectionner la Texture ##" + std::to_string(id)).c_str())) {
                 IGFD::FileDialogConfig config;
-                config.path = ".";
+                config.path = "../data/texures";
                 ImGuiFileDialog::Instance()->OpenDialog(("##" + std::to_string(id) + " Texture").c_str(), "Choose Texture File", ".png,.jpg,.bmp", config);
             }
 
@@ -211,7 +211,7 @@ public:
             }
 
             if(texturePath != ""){
-                if (ImGui::Button(("Annuler le texture ##" + std::to_string(id)).c_str())){
+                if (ImGui::Button(("Annuler la texture ##" + std::to_string(id)).c_str())){
                     newtexturePath = ""; 
                     textureID = 0; 
                 }
