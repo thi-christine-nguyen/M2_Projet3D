@@ -46,9 +46,9 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
 }
 
 // Définition de la fonction de rappel pour le scroll de la souris
-void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
+void scroll_callback(GLFWwindow *window, double xOffset, double yOffset)
 {
-    // camera.processMouseScroll(yoffset);
+    camera.scrollCallback(xOffset, yOffset);
 }
 
 class InputManager {
