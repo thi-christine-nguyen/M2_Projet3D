@@ -1,21 +1,24 @@
 #version 330 core
 
-// Input vertex data, different for all executions of this shader.
-layout(location = 0) in vec3 vertices_position_modelspace;
-layout (location = 1) in vec2 textureCoordinates;
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord;
 
-uniform mat4 view_mat;
-uniform mat4 project_mat;
+// Outputs for the fragment shader
+out vec3 FragPos;
+out vec3 Normal;
+out vec2 TexCoord;
 
-uniform int type;
-uniform mat4 transform;
+// Uniforms
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
-out vec2 TexCoord; // UV
-
-void main() {
-	vec3 pos = vertices_position_modelspace;
-	TexCoord = textureCoordinates; // Récupération des UVs pour l'envoyer au fragment shader
-
-        gl_Position = project_mat * view_mat * transform * vec4(pos, 1);
+void main()
+{
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+    TexCoord = aTexCoord;
+    
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
-

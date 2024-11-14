@@ -23,6 +23,7 @@
 #include "lib.hpp"
 #include "Transform.hpp"
 #include "BoundingBox.hpp"
+#include "Material.h"
 
 enum GameObjectType { 
     DEFAULT,
@@ -93,6 +94,14 @@ protected:
     int textureID; // 0 = flatColor sinon Texture
     const char *texturePath;
 
+    // // MATERIAL 
+    Material material; 
+    GLuint ambientULoc;
+    GLuint diffuseULoc;
+    GLuint specularULoc;
+    GLuint shininessULoc;
+
+
     // INTERFACE
     bool scaleLocked_ = false; 
     bool gravityEnabled_ = false;
@@ -102,8 +111,8 @@ public:
     /* ------------------------- CONSTRUCTOR -------------------------*/
 
     // Constructeur prenant une transformation optionnelle
-    GameObject(std::string name = "", int textId = 0, const Transform& initialTransform = Transform(), GameObject* parent = nullptr, GameObjectType type = GameObjectType::DEFAULT)
-        : name(name), textureID(textId), transform(initialTransform), parent(parent), type(type) {
+    GameObject(std::string name = "", int textId = 0, const Transform& initialTransform = Transform(), GameObject* parent = nullptr, GameObjectType type = GameObjectType::DEFAULT, const Material& material = Material())
+        : name(name), textureID(textId), transform(initialTransform), parent(parent), type(type), material(material) {
         ptr.reset(this);
     }
 
@@ -268,7 +277,6 @@ public:
     }
 
 
-
     /* ------------------------- TRANSFORMATIONS -------------------------*/
 
     void translate(const glm::vec3 &translation) { transform.translate(translation); boundingBox.updateAfterTransformation(vertices, transform.getMatrix());}
@@ -292,6 +300,11 @@ public:
         colorULoc = glGetUniformLocation(programID, "color");
         textureULoc = glGetUniformLocation(programID, "gameObjectTexture");
         textureIdULoc = glGetUniformLocation(programID, "textureID");
+
+        ambientULoc = glGetUniformLocation(programID, "material.ambient");
+        diffuseULoc = glGetUniformLocation(programID, "material.diffuse");
+        specularULoc = glGetUniformLocation(programID, "material.specular");
+        shininessULoc = glGetUniformLocation(programID, "material.shininess");
 
         // Binds + Chargement des buffers avec les donnéees de l'objets courant
         // Vertices
@@ -356,6 +369,11 @@ public:
         glBindTexture(GL_TEXTURE_2D, textureID);
         // Passer l'ID de texture à votre shader
         glUniform1i(textureULoc, 0); // Utilisez l'unité de texture 0
+
+        glUniform3fv(ambientULoc, 1, &material.ambient_material[0]);
+        glUniform3fv(diffuseULoc, 1, &material.diffuse_material[0]);
+        glUniform3fv(specularULoc, 1, &material.specular_material[0]);
+
 
         // Bind et Draw les triangles et recurse le draw sur les enfants
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
