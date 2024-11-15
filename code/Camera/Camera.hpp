@@ -136,6 +136,10 @@ public:
 		m_inputMode = _inputMode;
 	}
 
+	glm::vec3 getPosition(){
+		return m_position; 
+	}
+
 	void updateInterfaceCamera(float _deltaTime)
 	{
 		// ImGUI window creation
@@ -344,12 +348,12 @@ public:
 		glm::mat4 mat_v;
 		mat_v = glm::lookAt(m_position, m_position + m_target, m_upDirection);
         
-        GLuint id_v = glGetUniformLocation(programID, "view_mat");
+        GLuint id_v = glGetUniformLocation(programID, "view");
         glUniformMatrix4fv(id_v, 1, false, &mat_v[0][0]);
 
         // Projection matrix : 45 Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
         glm::mat4 mat_p = glm::perspective(glm::radians(m_fovDegree), (float)4 / (float)3, 0.1f, 100.0f);
-        GLuint id_p = glGetUniformLocation(programID, "project_mat");
+        GLuint id_p = glGetUniformLocation(programID, "projection");
         glUniformMatrix4fv(id_p, 1, false, &mat_p[0][0]);
     }
 

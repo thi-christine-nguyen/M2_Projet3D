@@ -197,7 +197,7 @@ public:
             // Modification de la texture
             if (ImGui::Button(("Sélectionner la Texture ##" + std::to_string(id)).c_str())) {
                 IGFD::FileDialogConfig config;
-                config.path = "../data/texures";
+                config.path = "../data/textures";
                 ImGuiFileDialog::Instance()->OpenDialog(("##" + std::to_string(id) + " Texture").c_str(), "Choose Texture File", ".png,.jpg,.bmp", config);
             }
 

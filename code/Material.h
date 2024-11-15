@@ -10,9 +10,9 @@ public:  // Modifier la section d'accès à public pour le constructeur
     double shininess;
 
     // Constructeur
-    Material(glm::vec3 ambient = glm::vec3(0., 0., 0.),
-             glm::vec3 diffuse = glm::vec3(1., 1., 1.),
-             glm::vec3 specular = glm::vec3(1., 1., 1.),
-             double shininess = 16.0)
+    Material(glm::vec3 ambient =  glm::vec3(0.19225, 0.19225, 0.19225),
+             glm::vec3 diffuse = glm::vec3(0.50754, 0.50754, 0.50754),
+             glm::vec3 specular = glm::vec3(0.508273, 0.508273, 0.508273),
+             double shininess = 51.0)
         : ambient_material(ambient), diffuse_material(diffuse), specular_material(specular), shininess(shininess) {}
 };

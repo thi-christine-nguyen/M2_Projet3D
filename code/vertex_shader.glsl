@@ -1,24 +1,21 @@
 #version 330 core
 
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec2 aTexCoord;
+layout(location = 0) in vec3 vertices_position_modelspace;
+layout(location = 1) in vec2 textureCoordinates;
+layout(location = 2) in vec3 normal_modelspace; // Nouvelle entrée pour la normale
 
-// Outputs for the fragment shader
-out vec3 FragPos;
-out vec3 Normal;
-out vec2 TexCoord;
-
-// Uniforms
-uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 model;
 
-void main()
-{
-    FragPos = vec3(model * vec4(aPos, 1.0));
-    Normal = mat3(transpose(inverse(model))) * aNormal;
-    TexCoord = aTexCoord;
+out vec2 TexCoord; // UV
+out vec3 FragPos;  // Position du fragment
+out vec3 Normal;   // Normale du fragment
+
+void main() {
+    FragPos = vec3(model * vec4(vertices_position_modelspace, 1.0));
+    Normal = mat3(transpose(inverse(model))) * normal_modelspace;
+    TexCoord = textureCoordinates;
     
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    gl_Position = projection * view * model * vec4(vertices_position_modelspace, 1.0);
 }

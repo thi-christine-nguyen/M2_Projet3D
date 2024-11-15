@@ -19,8 +19,6 @@
 // }
 // // Exemple pour enregistrer le callback de défilement dans la fonction de création de la fenêtre GLFW
 
-
-
 int main( void )
 {
     // Initialise GLFW
@@ -41,8 +39,8 @@ int main( void )
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
-    int window_width = static_cast<int>(mode->width * 0.8);
-    int window_height = static_cast<int>(mode->height * 1);
+    int window_width = static_cast<int>(mode->width * 0.5);
+    int window_height = static_cast<int>(mode->height * 0.8);
 
     // Open a window and create its OpenGL context
     char title[50] = "Projet 3D - Voxelisation";
@@ -122,23 +120,38 @@ int main( void )
     //----------------------------------------- Init -----------------------------------------//
 
     // Création des différents GameObjects
-    GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 1, "../data/textures/ball.png", programID); 
-    GameObject *cube2 = new Mesh("cube2", "../data/meshes/cube.obj", 2, "../data/textures/terrain.png", programID); 
+    GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 1, "../data/textures/grass.bmp", programID); 
+    // GameObject *cube2 = new Mesh("cube2", "../data/meshes/cube.obj", 2, "../data/textures/terrain.png", programID); 
 
 
     
     cube->setInitalTransform(cube->getTransform()); 
-    cube2->setInitalTransform(cube2->getTransform()); 
+    // cube2->setInitalTransform(cube2->getTransform()); 
     
     // Ajout des GameObjects au SceneManager
     SM->addObject(std::move(cube->ptr));
-    SM->addObject(std::move(cube2->ptr));
+    // SM->addObject(std::move(cube2->ptr));
 
     SM->initGameObjectsTexture();
 
     // Get a handle for our "LightPosition" uniform
     glUseProgram(programID);
-    GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
+    // GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
+
+    
+    glm::vec3 lightPos = glm::vec3(0.0f, 5.0f, 0.0f); // Une position fixe pour la lumière
+    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);  // Couleur de la lumière (blanc)
+
+    GLuint lightPosID = glGetUniformLocation(programID, "lightPos");
+    GLuint lightColorID = glGetUniformLocation(programID, "lightColor");
+
+    glUniform3fv(lightPosID, 1, &lightPos[0]);
+    glUniform3fv(lightColorID, 1, &lightColor[0]);
+
+
+  
+  
+
 
     // Init la fenêtre d'interface ImGUI
     interface.initImgui(window);
