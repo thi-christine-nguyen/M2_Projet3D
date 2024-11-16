@@ -93,12 +93,12 @@ public :
         static Transform transform; 
         static bool scaleLocked_ = false; 
         static glm::vec4 color = {1.f, 1.f, 1.f, 1.f};
-        
+        static Material material; 
 
         ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
 
         // Chemin pour le mesh
-        if (ImGui::Button("Mesh Path")) {
+        if (ImGui::Button("Select Mesh")) {
             IGFD::FileDialogConfig config;
             config.path = "../data/meshes";
             ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshDlgKey", "Choose Mesh File", ".obj, .off", config);
@@ -113,7 +113,7 @@ public :
 
         if(meshPath != ""){
             
-            if (ImGui::Button("Annuler le mesh")){
+            if (ImGui::Button("Cancel mesh")){
                 meshPath = ""; 
             }
 
@@ -122,7 +122,7 @@ public :
         ImGui::Text("Selected Mesh File: %s", meshPath.c_str());
 
         // Chemin pour la texture
-        if (ImGui::Button("Texture Path")) {
+        if (ImGui::Button("Select Texture")) {
             IGFD::FileDialogConfig config;
               config.path = "../data/textures";
             ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgTextureKey", "Choose File", ".png, .jpg, .bmp", config);
@@ -136,7 +136,7 @@ public :
         }
         if(texturePath != ""){
 
-            if (ImGui::Button("Annuler la texture")){
+            if (ImGui::Button("Cancel texture")){
                 texturePath = ""; 
             }
 
@@ -146,22 +146,22 @@ public :
         ImGui::Text("Selected Texture File: %s", texturePath.c_str());
 
         if (texturePath.empty()) {
-            ImGui::Text("Couleur RGB (0-256)");
+            ImGui::Text("Color RGB (0-256)");
             static float colorWheel[3] = {1.0f, 1.0f, 1.0f};  // Valeurs normalisées de 0 à 1
             static bool colorPopupOpen = false;
 
             // Bouton pour ouvrir la roue de couleurs
-            if (ImGui::Button("Choisir une couleur")) {
+            if (ImGui::Button("Choose a color")) {
                 ImGui::OpenPopup("ColorPickerPopup");
             }
 
             // Pop-up de sélection de couleur
             if (ImGui::BeginPopup("ColorPickerPopup")) {
-                ImGui::Text("Sélectionnez une couleur");
+                ImGui::Text("Choose a color");
                 ImGui::Separator();
 
                 // Affiche la roue de couleur
-                ImGui::ColorPicker3("Couleur", colorWheel);
+                ImGui::ColorPicker3("Color", colorWheel);
 
                 ImGui::Separator();
                 if (ImGui::Button("OK", ImVec2(120, 0))) {
@@ -179,7 +179,31 @@ public :
                 static_cast<int>(color[1] * 255),
                 static_cast<int>(color[2] * 255)
             };
-            ImGui::Text("Couleur sélectionnée : R%d G%d B%d", colorRGB[0], colorRGB[1], colorRGB[2]);
+            ImGui::Text("Selected Color : R%d G%d B%d", colorRGB[0], colorRGB[1], colorRGB[2]);
+        }
+
+        ImGui::Text("Material Settings");
+        glm::vec3 ambient = material.getAmbient();
+        if (ImGui::DragFloat3("Ambient", glm::value_ptr(ambient), 0.001f)) {
+            material.setAmbient(ambient);
+        }
+
+        // Diffuse color
+        glm::vec3 diffuse = material.getDiffuse();
+        if (ImGui::DragFloat3("Diffuse", glm::value_ptr(diffuse), 0.001f)) {
+            material.setDiffuse(diffuse);
+        }
+
+        // Specular color
+        glm::vec3 specular = material.getSpecular();
+        if (ImGui::DragFloat3("Specular", glm::value_ptr(specular), 0.001f)) {
+            material.setSpecular(specular);
+        }
+
+        // Shininess
+        float shininess = material.getShininess();
+        if (ImGui::SliderFloat("Shininess", &shininess, 1.0f, 128.0f)) {
+            material.setShininess(shininess);
         }
 
 
@@ -237,6 +261,9 @@ public :
                 GameObject* newObject;
             
                 newObject = new Mesh(name, meshPath.c_str(), textureID, texturePath.c_str(), programID);
+                newObject->setMaterial(material); 
+              
+                
                 if(textureID == 0){
                     newObject->setColor(color);  
                 }

@@ -277,6 +277,10 @@ public:
         id = _id;
     }
 
+    void setMaterial(Material m){
+        material = m; 
+    }
+
 
     /* ------------------------- TRANSFORMATIONS -------------------------*/
 
@@ -381,12 +385,10 @@ public:
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
         glEnableVertexAttribArray(2); // Dans le layout 2
 
-
         glUniform3fv(ambientULoc, 1, &material.ambient_material[0]);
         glUniform3fv(diffuseULoc, 1, &material.diffuse_material[0]);
         glUniform3fv(specularULoc, 1, &material.specular_material[0]);
         glUniform1f(shininessULoc, material.shininess);
-
 
         // Bind et Draw les triangles et recurse le draw sur les enfants
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
@@ -419,7 +421,6 @@ public:
             child->initTexture(programID);
         }
     }
-
     /* ------------------------- PHYSICS -------------------------*/
 
     void updatePhysicallyBasedPosition(float deltaTime) {

@@ -45,7 +45,7 @@ void main() {
 
     // Application de la texture ou de la couleur
     if (textureID == 0)
-        fragColor = vec4(phong * color.rgb, color.a);
+        fragColor = vec4(phong * color.rgb, 1.0);
     else
         fragColor = vec4(phong, 1.0) * texture(gameObjectTexture, TexCoord);
 }
