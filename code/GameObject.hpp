@@ -23,6 +23,7 @@
 #include "lib.hpp"
 #include "Transform.hpp"
 #include "BoundingBox.hpp"
+#include "Material.h"
 
 enum GameObjectType { 
     DEFAULT,
@@ -64,6 +65,7 @@ protected:
     GLuint vboVertices;
     GLuint vboIndices;
     GLuint vboUV;
+    GLuint vboNormals; 
 
     // UNIFORM LOCATION
     GLuint typeULoc;
@@ -93,6 +95,14 @@ protected:
     int textureID; // 0 = flatColor sinon Texture
     const char *texturePath;
 
+    // // MATERIAL 
+    Material material; 
+    GLuint ambientULoc;
+    GLuint diffuseULoc;
+    GLuint specularULoc;
+    GLuint shininessULoc;
+
+
     // INTERFACE
     bool scaleLocked_ = false; 
     bool gravityEnabled_ = false;
@@ -102,8 +112,8 @@ public:
     /* ------------------------- CONSTRUCTOR -------------------------*/
 
     // Constructeur prenant une transformation optionnelle
-    GameObject(std::string name = "", int textId = 0, const Transform& initialTransform = Transform(), GameObject* parent = nullptr, GameObjectType type = GameObjectType::DEFAULT)
-        : name(name), textureID(textId), transform(initialTransform), parent(parent), type(type) {
+    GameObject(std::string name = "", int textId = 0, const Transform& initialTransform = Transform(), GameObject* parent = nullptr, GameObjectType type = GameObjectType::DEFAULT, const Material& material = Material())
+        : name(name), textureID(textId), transform(initialTransform), parent(parent), type(type), material(material) {
         ptr.reset(this);
     }
 
@@ -267,6 +277,9 @@ public:
         id = _id;
     }
 
+    void setMaterial(Material m){
+        material = m; 
+    }
 
 
     /* ------------------------- TRANSFORMATIONS -------------------------*/
@@ -286,12 +299,19 @@ public:
         glGenBuffers(1, &vboVertices); // VBO vertex
         glGenBuffers(1, &vboUV);        // VBO uv
         glGenBuffers(1, &vboIndices);  // VBO d'élements indices pour draw triangles
+        glGenBuffers(1, &vboNormals);
 
-        transformULoc = glGetUniformLocation(programID, "transform");
+        transformULoc = glGetUniformLocation(programID, "model");
         typeULoc = glGetUniformLocation(programID, "type");
         colorULoc = glGetUniformLocation(programID, "color");
         textureULoc = glGetUniformLocation(programID, "gameObjectTexture");
         textureIdULoc = glGetUniformLocation(programID, "textureID");
+
+        ambientULoc = glGetUniformLocation(programID, "material.ambient");
+        diffuseULoc = glGetUniformLocation(programID, "material.diffuse");
+        specularULoc = glGetUniformLocation(programID, "material.specular");
+        shininessULoc = glGetUniformLocation(programID, "material.shininess");
+
 
         // Binds + Chargement des buffers avec les donnéees de l'objets courant
         // Vertices
@@ -303,6 +323,9 @@ public:
         // Indices
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * indices.size(), &indices[0], GL_STATIC_DRAW);
+        // Normales
+        glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
     }
 
     void DeleteBuffers(GLuint programID)
@@ -311,6 +334,7 @@ public:
         glDeleteBuffers(1, &vboIndices);
         glDeleteBuffers(1, &vboUV);
         glDeleteVertexArrays(1, &vao);
+        glDeleteBuffers(1, &vboNormals);
         glDeleteProgram(programID);
         for (GameObject *child : children)
         {
@@ -333,10 +357,10 @@ public:
         // Envoi de la couleur du GameObject
         glUniform4fv(colorULoc, 1, &color[0]);
         // Activer la texture appropriée
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        // Envoi de la texture du GameObject
-        glUniform1i(textureULoc, 0);
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, textureID);
+        // // Envoi de la texture du GameObject
+        // glUniform1i(textureULoc, 0);
 
         // Bind et Envoi de la liste pré chargée des vertices
         glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
@@ -356,6 +380,15 @@ public:
         glBindTexture(GL_TEXTURE_2D, textureID);
         // Passer l'ID de texture à votre shader
         glUniform1i(textureULoc, 0); // Utilisez l'unité de texture 0
+
+        glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+        glEnableVertexAttribArray(2); // Dans le layout 2
+
+        glUniform3fv(ambientULoc, 1, &material.ambient_material[0]);
+        glUniform3fv(diffuseULoc, 1, &material.diffuse_material[0]);
+        glUniform3fv(specularULoc, 1, &material.specular_material[0]);
+        glUniform1f(shininessULoc, material.shininess);
 
         // Bind et Draw les triangles et recurse le draw sur les enfants
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
@@ -388,7 +421,6 @@ public:
             child->initTexture(programID);
         }
     }
-
     /* ------------------------- PHYSICS -------------------------*/
 
     void updatePhysicallyBasedPosition(float deltaTime) {
