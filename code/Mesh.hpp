@@ -10,6 +10,75 @@
 #include <GL/glew.h>
 
 class Mesh : public GameObject {
+
+    void FloodFill(const glm::vec3& startPoint, float voxelSize) {
+        // Calcul des limites du maillage
+        glm::vec3 minBounds(FLT_MAX), maxBounds(-FLT_MAX);
+        for (const auto& vertex : vertices) {
+            minBounds = glm::min(minBounds, vertex);
+            maxBounds = glm::max(maxBounds, vertex);
+        }
+
+        // Dimensions de la grille
+        glm::vec3 gridSize = (maxBounds - minBounds) / voxelSize;
+        int gridX = static_cast<int>(std::ceil(gridSize.x));
+        int gridY = static_cast<int>(std::ceil(gridSize.y));
+        int gridZ = static_cast<int>(std::ceil(gridSize.z));
+
+        // Initialisation de la grille de voxels
+        std::vector<std::vector<std::vector<bool>>> voxelGrid(
+            gridX, std::vector<std::vector<bool>>(gridY, std::vector<bool>(gridZ, false))
+        );
+
+        // Fonction lambda pour convertir un point monde en coordonnées de la grille
+        auto worldToGrid = [&](const glm::vec3& point) -> glm::ivec3 {
+            glm::vec3 normalized = (point - minBounds) / voxelSize;
+            return glm::ivec3(
+                static_cast<int>(std::floor(normalized.x)),
+                static_cast<int>(std::floor(normalized.y)),
+                static_cast<int>(std::floor(normalized.z))
+            );
+        };
+
+        // Fonction lambda pour vérifier si une cellule est valide
+        auto isValid = [&](int x, int y, int z) -> bool {
+            return x >= 0 && x < gridX && y >= 0 && y < gridY && z >= 0 && z < gridZ;
+        };
+
+        // Flood Fill Algorithm
+        std::queue<glm::ivec3> toVisit;
+        glm::ivec3 startGrid = worldToGrid(startPoint);
+        toVisit.push(startGrid);
+
+        while (!toVisit.empty()) {
+            glm::ivec3 current = toVisit.front();
+            toVisit.pop();
+
+            if (!isValid(current.x, current.y, current.z) || voxelGrid[current.x][current.y][current.z]) {
+                continue;
+            }
+
+            voxelGrid[current.x][current.y][current.z] = true;
+
+            // Vérifier les voisins dans les 6 directions
+            std::vector<glm::ivec3> neighbors = {
+                current + glm::ivec3(1, 0, 0), current + glm::ivec3(-1, 0, 0),
+                current + glm::ivec3(0, 1, 0), current + glm::ivec3(0, -1, 0),
+                current + glm::ivec3(0, 0, 1), current + glm::ivec3(0, 0, -1)
+            };
+
+            for (const auto& neighbor : neighbors) {
+                if (isValid(neighbor.x, neighbor.y, neighbor.z) && !voxelGrid[neighbor.x][neighbor.y][neighbor.z]) {
+                    toVisit.push(neighbor);
+                }
+            }
+        }
+
+        // Résultat final : Grille voxelisée
+        std::cout << "Flood Fill terminé. Grille voxelisée générée." << std::endl;
+    }
+
+
 public:
     bool editMode = false;
     char newName[128]; 
