@@ -23,7 +23,8 @@
 enum class InputMode
 {
 	Fixed,
-	Free
+	Free,
+	Focus
 };
 
 class Camera
@@ -48,7 +49,7 @@ private:
 	bool m_showImguiDemo{ false };
 
 	// Input Mode
-    std::array<const char*, 2> inputModes = { "Fixed", "Free"};
+    std::array<const char*, 3> inputModes = { "Fixed", "Focus", "Free"};
 	InputMode m_inputMode;
 
 	// mouseInputs
@@ -63,6 +64,13 @@ private:
     bool m_transitioning; // Indique si une transition est en cours
     double m_transitionElapsedTime; // Temps au début de la transition
     float m_transitionDuration; // Durée de la transition
+
+	// Camera orbitale
+	glm::vec3 m_focusTarget;       // Position de l'acteur (le point central de l'orbite)
+    float m_orbitRadius = 10.0f;   // Distance entre la caméra et l'acteur
+    float m_orbitYaw = 0.0f;       // Angle horizontal (en radians)
+    float m_orbitPitch = glm::radians(30.0f); // Angle vertical (en radians)
+    float m_zoomSpeed = 1.0f;      // Vitesse de zoom pour les touches Z et S
 
 public: 
 	// Attributs sauvegardés
@@ -140,6 +148,63 @@ public:
 		return m_position; 
 	}
 
+	// Camera orbitale
+    void setFocusTarget(const glm::vec3& target) { m_focusTarget = target; }
+
+	void activateFocusMode() {
+		m_inputMode = InputMode::Focus;
+		// Place la caméra à une distance initiale de l’acteur (ex. rayon orbital)
+		m_orbitRadius = 10.0f;
+
+		// Aligne la caméra avec un angle de vue par défaut
+		m_orbitYaw = glm::radians(0.0f);     // Par défaut, vue de face
+		m_orbitPitch = glm::radians(30.0f);  // Angle vertical pour une vue en plongée
+
+		// Position initiale de la caméra
+		m_position = m_focusTarget + glm::vec3(
+			m_orbitRadius * cos(m_orbitPitch) * sin(m_orbitYaw), // x
+			m_orbitRadius * sin(m_orbitPitch),                  // y
+			m_orbitRadius * cos(m_orbitPitch) * cos(m_orbitYaw) // z
+		);
+
+		// Met à jour la matrice view pour qu'elle regarde toujours l'acteur
+		m_target = m_focusTarget - m_position; // Direction vers le centre
+		m_viewMatrix = glm::lookAt(m_position, m_focusTarget, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+
+	void updateFocusCamera(float deltaTime, GLFWwindow* window) {
+		if (m_inputMode != InputMode::Focus) return; // Si on n'est pas en mode focus, on ne fait rien
+
+		// Contrôles pour ajuster le yaw (rotation horizontale) avec Q et D
+		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+			m_orbitYaw += deltaTime; // Incrémente l'angle horizontal
+		}
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+			m_orbitYaw -= deltaTime; // Décrémente l'angle horizontal
+		}
+
+		// Contrôles pour zoomer/dézoomer avec Z et S
+		if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+			m_orbitRadius -= m_zoomSpeed * deltaTime; // Réduit la distance (zoom)
+			m_orbitRadius = glm::max(m_orbitRadius, 2.0f); // Distance minimale pour éviter de passer à travers l'acteur
+		}
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+			m_orbitRadius += m_zoomSpeed * deltaTime; // Augmente la distance (dézoom)
+		}
+
+		// Calculer la nouvelle position de la caméra en fonction des angles et du rayon
+		m_position = m_focusTarget + glm::vec3(
+			m_orbitRadius * cos(m_orbitPitch) * sin(m_orbitYaw), // x
+			m_orbitRadius * sin(m_orbitPitch),                  // y
+			m_orbitRadius * cos(m_orbitPitch) * cos(m_orbitYaw) // z
+		);
+
+		// Toujours regarder l'acteur (focus)
+		m_target = m_focusTarget - m_position;
+		m_viewMatrix = glm::lookAt(m_position, m_focusTarget, glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+
+	// Update
 	void updateInterfaceCamera(float _deltaTime)
 	{
 		// ImGUI window creation
@@ -209,6 +274,11 @@ public:
 		if (glfwGetKey(_window, GLFW_KEY_V) == GLFW_PRESS) {
 			m_inputMode = InputMode::Free;
 		}
+		// Activer le mode focus avec F
+		if (glfwGetKey(_window, GLFW_KEY_F) == GLFW_PRESS) {
+			activateFocusMode();
+		}
+
 		if (glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 			// cameraShake->startShake();
 		}
@@ -249,8 +319,12 @@ public:
 			if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS) {
 				m_position -= m_rightDirection * translationSpeed;
 			}
+		} else if (m_inputMode == InputMode::Focus) {
+			// Update des inputs en mode focus
+        	updateFocusCamera(_deltaTime, _window); // Mode focus
 		}
 	}
+
 	void updateCameraRotation()
 	{
 		// Convertir les angles d'Euler en quaternion pour la rotation
