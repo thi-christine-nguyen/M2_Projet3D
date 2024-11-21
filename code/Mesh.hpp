@@ -8,76 +8,17 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <GL/glew.h>
+#include <queue>
+#include <unordered_set>
+
+struct Voxel {
+    glm::vec3 position; // Position du voxel dans l'espace
+    glm::vec3 color;    // Couleur du voxel
+    float size;         // Taille du voxel
+};
+
 
 class Mesh : public GameObject {
-
-    void FloodFill(const glm::vec3& startPoint, float voxelSize) {
-        // Calcul des limites du maillage
-        glm::vec3 minBounds(FLT_MAX), maxBounds(-FLT_MAX);
-        for (const auto& vertex : vertices) {
-            minBounds = glm::min(minBounds, vertex);
-            maxBounds = glm::max(maxBounds, vertex);
-        }
-
-        // Dimensions de la grille
-        glm::vec3 gridSize = (maxBounds - minBounds) / voxelSize;
-        int gridX = static_cast<int>(std::ceil(gridSize.x));
-        int gridY = static_cast<int>(std::ceil(gridSize.y));
-        int gridZ = static_cast<int>(std::ceil(gridSize.z));
-
-        // Initialisation de la grille de voxels
-        std::vector<std::vector<std::vector<bool>>> voxelGrid(
-            gridX, std::vector<std::vector<bool>>(gridY, std::vector<bool>(gridZ, false))
-        );
-
-        // Fonction lambda pour convertir un point monde en coordonnées de la grille
-        auto worldToGrid = [&](const glm::vec3& point) -> glm::ivec3 {
-            glm::vec3 normalized = (point - minBounds) / voxelSize;
-            return glm::ivec3(
-                static_cast<int>(std::floor(normalized.x)),
-                static_cast<int>(std::floor(normalized.y)),
-                static_cast<int>(std::floor(normalized.z))
-            );
-        };
-
-        // Fonction lambda pour vérifier si une cellule est valide
-        auto isValid = [&](int x, int y, int z) -> bool {
-            return x >= 0 && x < gridX && y >= 0 && y < gridY && z >= 0 && z < gridZ;
-        };
-
-        // Flood Fill Algorithm
-        std::queue<glm::ivec3> toVisit;
-        glm::ivec3 startGrid = worldToGrid(startPoint);
-        toVisit.push(startGrid);
-
-        while (!toVisit.empty()) {
-            glm::ivec3 current = toVisit.front();
-            toVisit.pop();
-
-            if (!isValid(current.x, current.y, current.z) || voxelGrid[current.x][current.y][current.z]) {
-                continue;
-            }
-
-            voxelGrid[current.x][current.y][current.z] = true;
-
-            // Vérifier les voisins dans les 6 directions
-            std::vector<glm::ivec3> neighbors = {
-                current + glm::ivec3(1, 0, 0), current + glm::ivec3(-1, 0, 0),
-                current + glm::ivec3(0, 1, 0), current + glm::ivec3(0, -1, 0),
-                current + glm::ivec3(0, 0, 1), current + glm::ivec3(0, 0, -1)
-            };
-
-            for (const auto& neighbor : neighbors) {
-                if (isValid(neighbor.x, neighbor.y, neighbor.z) && !voxelGrid[neighbor.x][neighbor.y][neighbor.z]) {
-                    toVisit.push(neighbor);
-                }
-            }
-        }
-
-        // Résultat final : Grille voxelisée
-        std::cout << "Flood Fill terminé. Grille voxelisée générée." << std::endl;
-    }
-
 
 public:
     bool editMode = false;
@@ -85,6 +26,20 @@ public:
     std::string meshPath; 
     std::string newtexturePath;
     GLuint programID; 
+
+    std::vector<glm::vec3> vertex; 
+    
+    // Voxelisation
+    std::vector<std::vector<std::vector<int>>> grid;
+    std::vector<glm::vec3> voxelVerticesGrid; // Verts des cubes (voxels)
+    std::vector<GLuint> voxelIndicesGrid; // Indices pour les triangles du cube
+    GLuint vaoVoxels, vboVoxelVertices, vboVoxelIndices;
+    std::vector<Voxel> voxels;
+    bool showMesh = true;
+    int gridSizeX; 
+    int gridSizeY; 
+    int gridSizeZ; 
+
 
 
 
@@ -109,6 +64,11 @@ public:
         
         this->GenerateBuffers(programID);
         this->initBoundingBox();
+        vertex = vertices; 
+        // drawGrid(boundingBox.getMin(), boundingBox.getMax(), 1);        
+        // generateBoundingBoxVertices();  
+        generateVoxelGrid(0.5); 
+      
     }
 
     void loadModel(const char *path) {
@@ -172,9 +132,12 @@ public:
             }
         }
 
+      
+
         file.close();
         return true;
     }
+
 
     bool loadOFF(const char *path) {
         std::ifstream file(path);
@@ -242,13 +205,121 @@ public:
             uvs.push_back(glm::vec2(u, v)); // Ajouter la coordonnée UV
         }
 
-           
-
         file.close();
+
+     
         return true;
     }
+    
+
+    void generateBoundingBoxVertices() {
+        vertices.clear();
+
+        // Ajouter les 8 sommets de la boîte
+        vertices.push_back(glm::vec3(boundingBox.getMin().x, boundingBox.getMin().y, boundingBox.getMin().z)); // 0
+        vertices.push_back(glm::vec3(boundingBox.getMax().x, boundingBox.getMin().y, boundingBox.getMin().z)); // 1
+        vertices.push_back(glm::vec3(boundingBox.getMax().x, boundingBox.getMax().y, boundingBox.getMin().z)); // 2
+        vertices.push_back(glm::vec3(boundingBox.getMin().x, boundingBox.getMax().y, boundingBox.getMin().z)); // 3
+        vertices.push_back(glm::vec3(boundingBox.getMin().x, boundingBox.getMin().y, boundingBox.getMax().z)); // 4
+        vertices.push_back(glm::vec3(boundingBox.getMax().x, boundingBox.getMin().y, boundingBox.getMax().z)); // 5
+        vertices.push_back(glm::vec3(boundingBox.getMax().x, boundingBox.getMax().y, boundingBox.getMax().z)); // 6
+        vertices.push_back(glm::vec3(boundingBox.getMin().x, boundingBox.getMax().y, boundingBox.getMax().z)); // 7
+
+        indices.clear();
+
+        // Bottom face (z = minBound.z), 2 triangles
+        indices.push_back(0); indices.push_back(1); indices.push_back(2);
+        indices.push_back(0); indices.push_back(2); indices.push_back(3);
+
+        // Top face (z = maxBound.z), 2 triangles
+        indices.push_back(4); indices.push_back(5); indices.push_back(6);
+        indices.push_back(4); indices.push_back(6); indices.push_back(7);
+
+        // Front face (y = minBound.y), 2 triangles
+        indices.push_back(0); indices.push_back(1); indices.push_back(5);
+        indices.push_back(0); indices.push_back(5); indices.push_back(4);
+
+        // Back face (y = maxBound.y), 2 triangles
+        indices.push_back(3); indices.push_back(2); indices.push_back(6);
+        indices.push_back(3); indices.push_back(6); indices.push_back(7);
+
+        // Left face (x = minBound.x), 2 triangles
+        indices.push_back(0); indices.push_back(3); indices.push_back(7);
+        indices.push_back(0); indices.push_back(7); indices.push_back(4);
+
+        // Right face (x = maxBound.x), 2 triangles
+        indices.push_back(1); indices.push_back(2); indices.push_back(6);
+        indices.push_back(1); indices.push_back(6); indices.push_back(5);
+
+        this->GenerateBuffers(programID);
+    }
+
+    
+    bool isVertexInsideVoxel(const glm::vec3& vertex, const glm::vec3& voxelMin, const glm::vec3& voxelMax) {
+        return (vertex.x >= voxelMin.x && vertex.x <= voxelMax.x) &&
+            (vertex.y >= voxelMin.y && vertex.y <= voxelMax.y) &&
+            (vertex.z >= voxelMin.z && vertex.z <= voxelMax.z);
+    }
+
+    void generateVoxelGrid(float voxelSize) {
+        vertices.clear();
+        indices.clear();
+
+        // Résolution de la grille (nombre de voxels dans chaque direction)
+        int numVoxelsX = (boundingBox.getMax().x - boundingBox.getMin().x) / voxelSize;
+        int numVoxelsY = (boundingBox.getMax().y - boundingBox.getMin().y) / voxelSize;
+        int numVoxelsZ = (boundingBox.getMax().z - boundingBox.getMin().z) / voxelSize;
+
+        // Parcours de la grille de voxels
+        for (int i = 0; i < numVoxelsX; ++i) {
+            for (int j = 0; j < numVoxelsY; ++j) {
+                for (int k = 0; k < numVoxelsZ; ++k) {
+                    glm::vec3 voxelMin = glm::vec3(boundingBox.getMin().x + i * voxelSize, 
+                                                    boundingBox.getMin().y + j * voxelSize, 
+                                                    boundingBox.getMin().z + k * voxelSize);
+                    glm::vec3 voxelMax = voxelMin + glm::vec3(voxelSize, voxelSize, voxelSize);
+
+                    // Vérifier si un vertex du maillage est à l'intérieur de ce voxel
+                    for (const auto& v : vertex) {
+                        if (isVertexInsideVoxel(v, voxelMin, voxelMax)) {
+                            // Si un vertex est à l'intérieur du voxel, afficher ce voxel
+                            // Ajouter les 8 sommets du voxel
+                            int baseIndex = vertices.size();
+                            vertices.push_back(glm::vec3(voxelMin.x, voxelMin.y, voxelMin.z)); // 0
+                            vertices.push_back(glm::vec3(voxelMax.x, voxelMin.y, voxelMin.z)); // 1
+                            vertices.push_back(glm::vec3(voxelMax.x, voxelMax.y, voxelMin.z)); // 2
+                            vertices.push_back(glm::vec3(voxelMin.x, voxelMax.y, voxelMin.z)); // 3
+                            vertices.push_back(glm::vec3(voxelMin.x, voxelMin.y, voxelMax.z)); // 4
+                            vertices.push_back(glm::vec3(voxelMax.x, voxelMin.y, voxelMax.z)); // 5
+                            vertices.push_back(glm::vec3(voxelMax.x, voxelMax.y, voxelMax.z)); // 6
+                            vertices.push_back(glm::vec3(voxelMin.x, voxelMax.y, voxelMax.z)); // 7
+
+                            // Ajouter les indices pour les faces du voxel
+                            indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 2);
+                            indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 2); indices.push_back(baseIndex + 3);
+                            indices.push_back(baseIndex + 4); indices.push_back(baseIndex + 5); indices.push_back(baseIndex + 6);
+                            indices.push_back(baseIndex + 4); indices.push_back(baseIndex + 6); indices.push_back(baseIndex + 7);
+                            indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 5);
+                            indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 5); indices.push_back(baseIndex + 4);
+                            indices.push_back(baseIndex + 3); indices.push_back(baseIndex + 2); indices.push_back(baseIndex + 6);
+                            indices.push_back(baseIndex + 3); indices.push_back(baseIndex + 6); indices.push_back(baseIndex + 7);
+                            indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 3); indices.push_back(baseIndex + 7);
+                            indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 7); indices.push_back(baseIndex + 4);
+                            indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 2); indices.push_back(baseIndex + 6);
+                            indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 6); indices.push_back(baseIndex + 5);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Générer les buffers pour OpenGL
+        this->GenerateBuffers(programID);
+    }
+
 
     void updateInterfaceTransform(float _deltaTime){
+      
         
         ImGui::Checkbox(("Edit mode ##" + std::to_string(id) ).c_str(), &editMode);
         if (editMode) {
@@ -363,6 +434,23 @@ public:
             if (ImGui::SliderFloat(("Shininess ##" + std::to_string(id)).c_str(), &shininess, 1.0f, 128.0f)) {
                 material.setShininess(shininess);
             }
+
+            if (ImGui::Button("Toggle Mesh Visibility")) {
+                showMesh = !showMesh;  // Inverser l'état de la visibilité du maillage
+            }
+            
+            ImGui::Text("Voxélisation");
+            static float voxelSize = 0.1f;  // Taille du voxel par défaut
+            ImGui::SliderFloat("Taille du voxel", &voxelSize, 0.01f, 1.0f);  // Slider pour ajuster la taille des voxels
+
+            // // Bouton pour générer les voxels
+            // if (ImGui::Button("Générer voxels")) {
+            //     // Appeler la fonction pour calculer la voxélisation
+            //     voxelizeMesh(voxelSize);  // Génère la voxélisation du maillage
+            //     generateVoxelData(voxelSize);  // Calcule les données des voxels (vertices et indices)
+            //     initializeVoxelBuffers();  // Crée les buffers OpenGL pour les voxels
+            // }
+                
         }
         ImGui::Separator();
         GameObject::updateInterfaceTransform(_deltaTime);

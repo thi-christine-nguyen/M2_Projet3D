@@ -86,6 +86,7 @@
         "queue": "cpp",
         "ranges": "cpp",
         "span": "cpp",
-        "*.glsl": "cpp"
+        "*.glsl": "cpp",
+        "unordered_set": "cpp"
     }
 }

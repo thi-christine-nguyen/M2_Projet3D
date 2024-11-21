@@ -2,7 +2,7 @@
 
 layout(location = 0) in vec3 vertices_position_modelspace;
 layout(location = 1) in vec2 textureCoordinates;
-layout(location = 2) in vec3 normal_modelspace; // Nouvelle entrée pour la normale
+layout(location = 2) in vec3 normal_modelspace; 
 
 uniform mat4 view;
 uniform mat4 projection;

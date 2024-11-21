@@ -94,7 +94,7 @@ int main( void )
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LESS);
     // Cull triangles which normal is not towards the camera
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
 
     // Création des managers
     SceneManager *SM = new SceneManager(programID);
@@ -120,9 +120,8 @@ int main( void )
     //----------------------------------------- Init -----------------------------------------//
 
     // Création des différents GameObjects
-    GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 1, "../data/textures/grass.bmp", programID); 
+    GameObject *cube = new Mesh("cube", "../data/meshes/bikini.obj", 1, "../data/textures/ball.png", programID); 
     // GameObject *cube2 = new Mesh("cube2", "../data/meshes/cube.obj", 2, "../data/textures/terrain.png", programID); 
-
 
     
     cube->setInitalTransform(cube->getTransform()); 
@@ -139,7 +138,7 @@ int main( void )
     // GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
     
-    glm::vec3 lightPos = glm::vec3(0.0f, 5.0f, 0.0f); // Une position fixe pour la lumière
+    glm::vec3 lightPos = glm::vec3(10, 10, 10); // Une position fixe pour la lumière
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);  // Couleur de la lumière (blanc)
 
     GLuint lightPosID = glGetUniformLocation(programID, "lightPos");
