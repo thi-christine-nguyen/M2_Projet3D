@@ -17,8 +17,6 @@ public:
     std::string newtexturePath;
     GLuint programID; 
 
-
-
     Mesh() {}
 
     Mesh(std::string name, const char *path, int textureID, const char *texturePath, GLuint programID = 0) {
@@ -37,14 +35,14 @@ public:
         meshPath = path; 
         newtexturePath = texturePath; 
         this->programID = programID; 
-        
+
         this->GenerateBuffers(programID);
         this->initBoundingBox();
     }
 
     void loadModel(const char *path) {
         std::string extension = std::string(path).substr(std::string(path).find_last_of(".") + 1);
-  
+
         if (extension == "obj") {
             if (!loadOBJ(path)) {
                 std::cerr << "Failed to load OBJ model." << std::endl;
@@ -83,13 +81,13 @@ public:
             else if (type == "vn") {
                 glm::vec3 normal;
                 ss >> normal.x >> normal.y >> normal.z;
-               
+
                 normals.push_back(normal);
             }
             else if (type == "vt") {
                 glm::vec2 texCoord;
                 ss >> texCoord.x >> texCoord.y;
-            
+
                 uvs.push_back(texCoord);
             }
             else if (type == "f") {
@@ -163,8 +161,6 @@ public:
             normal = glm::normalize(normal);
         }
 
-          
-
         for (int i = 0; i < vertexCount; i++) {
             glm::vec3 position = vertices[i];
             // Exemple simple : on utilise la position en X et Y pour définir les coordonnées UV
@@ -172,8 +168,6 @@ public:
             float v = (position.y + 1.0f) / 2.0f;
             uvs.push_back(glm::vec2(u, v)); // Ajouter la coordonnée UV
         }
-
-           
 
         file.close();
         return true;

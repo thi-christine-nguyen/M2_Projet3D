@@ -23,6 +23,7 @@
 #include "lib.hpp"
 #include "Transform.hpp"
 #include "BoundingBox.hpp"
+#include "RegularGrid.hpp"
 #include "Material.h"
 
 enum GameObjectType { 
@@ -83,6 +84,7 @@ protected:
 
     // PHYSICS
     BoundingBox boundingBox;
+    RegularGrid grid;
     glm::vec3 velocity;
     glm::vec3 acceleration;
     float weight = 1.f;
@@ -147,7 +149,9 @@ public:
         boundingBox.init(verticesWorld);
         glm::vec3 min = boundingBox.getMin();
         glm::vec3 max = boundingBox.getMax();
-        std::cout << "Initialisation of bounding box done : min(" << min.x << "; " << min.y << "; " << min.z << ") / max(" << max.x << "; " << max.y << "; " << max.z << ")" << std::endl;
+        grid = RegularGrid(min, max, 10);
+        grid.initBuffers();
+        // std::cout << "Initialisation of bounding box done : min(" << min.x << "; " << min.y << "; " << min.z << ") / max(" << max.x << "; " << max.y << "; " << max.z << ")" << std::endl;
     }
 
     /* ------------------------- GETTERS/SETTERS -------------------------*/
@@ -162,7 +166,6 @@ public:
     void setTransform(const Transform& newTransform) {
         transform = newTransform;
         initBoundingBox();
-
     }
 
     void setInitalTransform(const Transform& newTransform) {
@@ -251,6 +254,15 @@ public:
         boundingBox = bbox;
     }
 
+    const RegularGrid& getRegularGrid() const {
+        return grid;
+    }
+
+    // Setter pour la boîte englobante
+    void setRegularGrid(const RegularGrid& _grid) {
+        grid = _grid;
+    }
+
     bool getHasPhysic(){
         return hasPhysic; 
     }
@@ -283,9 +295,24 @@ public:
 
     /* ------------------------- TRANSFORMATIONS -------------------------*/
 
-    void translate(const glm::vec3 &translation) { transform.translate(translation); boundingBox.updateAfterTransformation(vertices, transform.getMatrix());}
-    void scale(const glm::vec3 &scale) { transform.scale(scale); boundingBox.updateAfterTransformation(vertices, transform.getMatrix());}
-    void rotate(float angle, const glm::vec3 &axis) { transform.rotate(angle, axis); boundingBox.updateAfterTransformation(vertices, transform.getMatrix());}
+    void translate(const glm::vec3 &translation)
+    {
+        transform.translate(translation);
+        boundingBox.updateAfterTransformation(vertices, transform.getMatrix());
+        grid.updateAfterTransformation(vertices, transform.getMatrix());
+    }
+    void scale(const glm::vec3 &scale)
+    {
+        transform.scale(scale);
+        boundingBox.updateAfterTransformation(vertices, transform.getMatrix());
+        grid.updateAfterTransformation(vertices, transform.getMatrix());
+    }
+    void rotate(float angle, const glm::vec3 &axis)
+    {
+        transform.rotate(angle, axis);
+        boundingBox.updateAfterTransformation(vertices, transform.getMatrix());
+        grid.updateAfterTransformation(vertices, transform.getMatrix());
+    }
 
     glm::mat4 getWorldBasedTransform() const {
         return parent == nullptr ? transform.getMatrix() : parent->getWorldBasedTransform() * transform.getMatrix();
@@ -395,6 +422,7 @@ virtual void draw() const
     glDisableVertexAttribArray(2);
 
     boundingBox.draw();
+    grid.draw();
 }
 
     /* ------------------------- TEXTURES -------------------------*/
