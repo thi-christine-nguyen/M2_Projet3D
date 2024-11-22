@@ -4,159 +4,165 @@
 // Include GLEW
 #include <GL/glew.h>
 
-// Include GLFW
-#include <GLFW/glfw3.h>
-
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <vector>
+#include <algorithm>
 #include <iostream>
 
-#include <vector>
+#include "variables.hpp"
 
 class BoundingBox {
 
 private:
-    glm::vec3 min;
-    glm::vec3 max;
+    glm::vec3 min; // Coordonnées minimales
+    glm::vec3 max; // Coordonnées maximales
+
+    GLuint vao = 0; // Vertex Array Object
+    GLuint vbo = 0; // Vertex Buffer Object
+    GLuint ebo = 0; // Element Buffer Object (facultatif si indices)
+    GLuint colorULoc;
+
+    std::vector<glm::vec3> vertices; // Sommets de la boîte englobante
+    std::vector<GLuint> indices;     // Indices pour dessiner les lignes
+
+    bool initialized = false;
 
 public:
+    // --- Constructeurs ---
+    BoundingBox(glm::vec3 min, glm::vec3 max) : min(min), max(max) {}
+    BoundingBox() : min(glm::vec3(0.0f)), max(glm::vec3(0.0f)) {}
 
-    //Constructor : 
-    BoundingBox(glm::vec3 min, glm::vec3 max){
-        this->min = min;
-        this->max = max;
+    // --- Accesseurs ---
+    glm::vec3 getMin() const { return min; }
+    glm::vec3 getMax() const { return max; }
+    GLuint getVAO() const {
+        return vao;
+    }
+    size_t getIndicesCount() const {
+        return indices.size();
     }
 
-    BoundingBox(){}
+    // --- Méthodes principales ---
 
-    // Methods
-    glm::vec3 getMin() {return this->min;}
-    glm::vec3 getMax() {return this->max;}
+    // Initialisation des buffers OpenGL
+    void initBuffers() {
+        if (initialized) return;
 
-    bool intersect(const BoundingBox& other) const {        // Vérifiez s'il y a intersection sur chaque axe (x, y, z)
-        bool collisionX = (max.x >= other.min.x) && (min.x <= other.max.x);
-        bool collisionY = (max.y >= other.min.y) && (min.y <= other.max.y);
-        bool collisionZ = (max.z >= other.min.z) && (min.z <= other.max.z);
+        // Générer les sommets de la bounding box
+        generateVertices();
 
-        // Il y a intersection si les boîtes se chevauchent sur tous les axes
-        return collisionX && collisionY && collisionZ;
+        // Création des VAO, VBO, et éventuellement EBO
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+        glGenBuffers(1, &ebo);
+
+        glBindVertexArray(vao);
+
+        // Charger les sommets dans le VBO
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+
+        // Configurer les attributs de vertex
+        glEnableVertexAttribArray(0); // Layout 0 : position
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+        // Charger les indices dans l'EBO (si nécessaire)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+
+        glBindVertexArray(0); // Delink le VAO
+
+        colorULoc = glGetUniformLocation(programID, "color");
+        initialized = true;
     }
-    
-    void init(const std::vector<glm::vec3>& vertices) {
-        if (vertices.empty())
-            return;
 
-        glm::vec3 minVertex = vertices[0];
-        glm::vec3 maxVertex = vertices[0];
+    // Générer les sommets et les indices pour la boîte englobante
+    void generateVertices() {
+        vertices = {
+            // Bottom face
+            {min.x, min.y, min.z}, {max.x, min.y, min.z},
+            {max.x, min.y, min.z}, {max.x, max.y, min.z},
+            {max.x, max.y, min.z}, {min.x, max.y, min.z},
+            {min.x, max.y, min.z}, {min.x, min.y, min.z},
 
-        // Trouver les coordonnées minimales et maximales dans le tableau de vertices
-        for (const auto& vertex : vertices) {
-            // Trouver les valeurs minimales sur chaque axe
-            minVertex.x = std::min(minVertex.x, vertex.x);
-            minVertex.y = std::min(minVertex.y, vertex.y);
-            minVertex.z = std::min(minVertex.z, vertex.z);
+            // Top face
+            {min.x, min.y, max.z}, {max.x, min.y, max.z},
+            {max.x, min.y, max.z}, {max.x, max.y, max.z},
+            {max.x, max.y, max.z}, {min.x, max.y, max.z},
+            {min.x, max.y, max.z}, {min.x, min.y, max.z},
 
-            // Trouver les valeurs maximales sur chaque axe
-            maxVertex.x = std::max(maxVertex.x, vertex.x);
-            maxVertex.y = std::max(maxVertex.y, vertex.y);
-            maxVertex.z = std::max(maxVertex.z, vertex.z);
+            // Connect bottom to top
+            {min.x, min.y, min.z}, {min.x, min.y, max.z},
+            {max.x, min.y, min.z}, {max.x, min.y, max.z},
+            {min.x, max.y, min.z}, {min.x, max.y, max.z},
+            {max.x, max.y, min.z}, {max.x, max.y, max.z}
+        };
+
+        // Les indices pour dessiner les lignes de la boîte
+        for (GLuint i = 0; i < vertices.size(); ++i) {
+            indices.push_back(i);
         }
-
-        // Assigner les coordonnées minimales et maximales
-        min = minVertex;
-        max = maxVertex;
-        // std::cout << "Initialisation of bounding box done : min(" << min.x << "; " << min.y << "; " << min.z << ") / max(" << max.x << "; " << max.y << "; " << max.z << ")" << std::endl;
     }
 
-    void updateAfterTransformation(std::vector<glm::vec3> vertices, glm::mat4 transform) {
+    void draw() const {
+        if (!initialized) {
+            std::cerr << "BoundingBox not initialized! Call initBuffers() first." << std::endl;
+            return;
+        }
+        // Activer le VAO de la bounding box
+        glBindVertexArray(vao);
+        glm::vec4 color {1.f, 0.f, 0.f, 1.f};
+        glUniform4fv(colorULoc, 1, &color[0]); // Couleur
+        glLineWidth(2.f);
+
+        // Dessiner les lignes
+        glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+    }
+
+    // Mettre à jour la bounding box après une transformation
+    void updateAfterTransformation(const std::vector<glm::vec3>& vertices, const glm::mat4& transform) {
         std::vector<glm::vec3> transformedVertices;
+
         for (const auto& vertex : vertices) {
-            // Appliquer la matrice de transformation à chaque vertex
             glm::vec4 transformedVertex = transform * glm::vec4(vertex, 1.0f);
             transformedVertices.push_back(glm::vec3(transformedVertex));
         }
 
-        // Mettre à jour la bounding box avec les nouveaux vertices transformés
         init(transformedVertices);
     }
 
-    void draw(glm::vec3 color) const {
-        glColor3f(color[0], color[1], color[2]);
-        glBegin(GL_LINES);
+    // Initialiser avec des sommets
+    void init(const std::vector<glm::vec3>& vertices) {
+        if (vertices.empty()) return;
 
-        // Bottom face
-        glVertex3d(min[0], min[1], min[2]);
-        glVertex3d(max[0], min[1], min[2]);
+        glm::vec3 minVertex = vertices[0];
+        glm::vec3 maxVertex = vertices[0];
 
-        glVertex3d(min[0], min[1], min[2]);
-        glVertex3d(min[0], max[1], min[2]);
-
-        glVertex3d(max[0], min[1], min[2]);
-        glVertex3d(max[0], max[1], min[2]);
-
-        glVertex3d(min[0], max[1], min[2]);
-        glVertex3d(max[0], max[1], min[2]);
-
-        // Top face
-        glVertex3d(min[0], min[1], max[2]);
-        glVertex3d(max[0], min[1], max[2]);
-
-        glVertex3d(min[0], min[1], max[2]);
-        glVertex3d(min[0], max[1], max[2]);
-
-        glVertex3d(max[0], min[1], max[2]);
-        glVertex3d(max[0], max[1], max[2]);
-
-        glVertex3d(min[0], max[1], max[2]);
-        glVertex3d(max[0], max[1], max[2]);
-
-        // Connect the corners
-        glVertex3d(min[0], min[1], min[2]);
-        glVertex3d(min[0], min[1], max[2]);
-
-        glVertex3d(max[0], min[1], min[2]);
-        glVertex3d(max[0], min[1], max[2]);
-
-        glVertex3d(min[0], max[1], min[2]);
-        glVertex3d(min[0], max[1], max[2]);
-
-        glVertex3d(max[0], max[1], min[2]);
-        glVertex3d(max[0], max[1], max[2]);
-
-        glEnd();
-    }
-
-    // Opérateurs
-    BoundingBox& operator=(const BoundingBox& other) {
-        if (this != &other) { // Vérifie si l'objet n'est pas le même que celui passé en argument
-            min = other.min;
-            max = other.max;
+        for (const auto& vertex : vertices) {
+            minVertex = glm::min(minVertex, vertex);
+            maxVertex = glm::max(maxVertex, vertex);
         }
-        return *this;
+
+        min = minVertex;
+        max = maxVertex;
+
+        // Régénérer les sommets et indices
+        generateVertices();
+        initBuffers();
     }
 
-    bool operator==(const BoundingBox& other) const {
-        return min == other.min && max == other.max;
+    // Destructeur
+    ~BoundingBox() {
+        if (initialized) {
+            glDeleteBuffers(1, &vbo);
+            glDeleteBuffers(1, &ebo);
+            glDeleteVertexArrays(1, &vao);
+        }
     }
-
-    glm::vec3 getMinOverlap(const BoundingBox& other) const {
-        glm::vec3 overlap;
-
-        glm::vec3 thisMin = min;
-        glm::vec3 thisMax = max;
-        glm::vec3 otherMin = other.min;
-        glm::vec3 otherMax = other.max;
-
-        // Calcul du chevauchement sur chaque axe
-        overlap.x = std::min(thisMax.x - otherMin.x, otherMax.x - thisMin.x);
-        overlap.y = std::min(thisMax.y - otherMin.y, otherMax.y - thisMin.y);
-        overlap.z = std::min(thisMax.z - otherMin.z, otherMax.z - thisMin.z);
-
-        return overlap;
-    }
-
-
 };
 
 #endif

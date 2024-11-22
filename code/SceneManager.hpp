@@ -30,7 +30,6 @@ public:
 
     // Méthode pour afficher tous les objets de la scène
     void draw() {
-    
         for (const auto& object : objects) {
             // Afficher l'objet
             object->draw();

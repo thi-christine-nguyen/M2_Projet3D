@@ -1,6 +1,5 @@
 #include "lib.hpp"
 #include "Camera/Camera.hpp"
-#include "PhysicManager.hpp"
 #include "InputManager.hpp"
 #include "GameObject.hpp"
 #include "Interface.hpp"
@@ -39,8 +38,8 @@ int main( void )
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
-    int window_width = static_cast<int>(mode->width * 0.5);
-    int window_height = static_cast<int>(mode->height * 0.8);
+    int window_width = static_cast<int>(mode->width * 0.7);
+    int window_height = static_cast<int>(mode->height * 1);
 
     // Open a window and create its OpenGL context
     char title[50] = "Projet 3D - Voxelisation";
@@ -92,13 +91,12 @@ int main( void )
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     // Accept fragment if it closer to the camera than the former one
-    glDepthFunc(GL_LESS);
+    // glDepthFunc(GL_LESS);
     // Cull triangles which normal is not towards the camera
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
 
     // Création des managers
     SceneManager *SM = new SceneManager(programID);
-    PhysicManager *PM = new PhysicManager();
     InputManager * IM = new InputManager();
 
     GLuint VertexArrayID;
@@ -114,17 +112,15 @@ int main( void )
 
     // Create and compile our GLSL program from the shaders
     programID = LoadShaders("vertex_shader.glsl", "fragment_shader.glsl" );
-    Interface interface(programID, SM, PM, IM, &camera); 
+    Interface interface(programID, SM, IM, &camera); 
     glUseProgram(programID);
 
     //----------------------------------------- Init -----------------------------------------//
 
     // Création des différents GameObjects
-    GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 1, "../data/textures/grass.bmp", programID); 
+    GameObject *cube = new Mesh("cube", "../data/meshes/sphere.off", 0, "../data/textures/grass.bmp", programID);
     // GameObject *cube2 = new Mesh("cube2", "../data/meshes/cube.obj", 2, "../data/textures/terrain.png", programID); 
 
-
-    
     cube->setInitalTransform(cube->getTransform()); 
     // cube2->setInitalTransform(cube2->getTransform()); 
     
@@ -147,11 +143,6 @@ int main( void )
 
     glUniform3fv(lightPosID, 1, &lightPos[0]);
     glUniform3fv(lightColorID, 1, &lightColor[0]);
-
-
-  
-  
-
 
     // Init la fenêtre d'interface ImGUI
     interface.initImgui(window);
@@ -201,10 +192,7 @@ int main( void )
 
         while (physicsClock >= updateTime) {
             SM->update(deltaTime);
-            // Check des collisions entre le plan et les gameObjects
-            PM->handleCollisions();
 
-            // std::cout << "PM tick" << std::endl;
             physicsClock -= updateTime;
         }
 

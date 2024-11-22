@@ -102,7 +102,6 @@ protected:
     GLuint specularULoc;
     GLuint shininessULoc;
 
-
     // INTERFACE
     bool scaleLocked_ = false; 
     bool gravityEnabled_ = false;
@@ -148,7 +147,7 @@ public:
         boundingBox.init(verticesWorld);
         glm::vec3 min = boundingBox.getMin();
         glm::vec3 max = boundingBox.getMax();
-        // std::cout << "Initialisation of bounding box done : min(" << min.x << "; " << min.y << "; " << min.z << ") / max(" << max.x << "; " << max.y << "; " << max.z << ")" << std::endl;
+        std::cout << "Initialisation of bounding box done : min(" << min.x << "; " << min.y << "; " << min.z << ") / max(" << max.x << "; " << max.y << "; " << max.z << ")" << std::endl;
     }
 
     /* ------------------------- GETTERS/SETTERS -------------------------*/
@@ -342,71 +341,61 @@ public:
         }
     };
 
-    virtual void draw() const
-    {
-        if (isWireframe) {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        }
-
-        
-        glBindVertexArray(vao); // Bind le giga vecteur array
-        // Envoi du type du GameObject
-        glUniform1i(typeULoc, type);
-        // Envoi de la matrice de transformation
-        glUniformMatrix4fv(transformULoc, 1, false, &getWorldBasedTransform()[0][0]);
-        // Envoi de la couleur du GameObject
-        glUniform4fv(colorULoc, 1, &color[0]);
-        // Activer la texture appropriée
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, textureID);
-        // // Envoi de la texture du GameObject
-        // glUniform1i(textureULoc, 0);
-
-        // Bind et Envoi de la liste pré chargée des vertices
-        glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
-        glEnableVertexAttribArray(0); // Dans le layout 0
-
-        // Bind et Envoi de la liste pré chargée des UVs
-        glBindBuffer(GL_ARRAY_BUFFER, vboUV);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
-        glEnableVertexAttribArray(1); // Dans le layout 1
-
-        // Bind et Envoi du textID pour appliquer la bonne texture sur le GameObject
-        glUniform1i(textureIdULoc, textureID);
-
-        // Activer la texture appropriée
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        // Passer l'ID de texture à votre shader
-        glUniform1i(textureULoc, 0); // Utilisez l'unité de texture 0
-
-        glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
-        glEnableVertexAttribArray(2); // Dans le layout 2
-
-        glUniform3fv(ambientULoc, 1, &material.ambient_material[0]);
-        glUniform3fv(diffuseULoc, 1, &material.diffuse_material[0]);
-        glUniform3fv(specularULoc, 1, &material.specular_material[0]);
-        glUniform1f(shininessULoc, material.shininess);
-
-        // Bind et Draw les triangles et recurse le draw sur les enfants
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
-        // std::cout << type << std::endl;
-        for (const GameObject *child : children) {
-            child->draw();
-        }
-        // boundingBox.draw(glm::vec3(255.0f));
-        glBindVertexArray(0); // Delink le VAO si plus tard on utilise plusieurs VAO
-        //  Desactiver les layouts après avoir dessiner
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-
-        if (isWireframe) {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
+virtual void draw() const
+{
+    // Si Wireframe, passe en mode GL_LINE
+    if (isWireframe) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
+
+    // --- Dessiner l'objet principal ---
+    glBindVertexArray(vao); // Bind le VAO
+    glUniform1i(typeULoc, type); // Envoi du type
+    glUniformMatrix4fv(transformULoc, 1, GL_FALSE, &getWorldBasedTransform()[0][0]); // Matrice de transformation
+    glUniform4fv(colorULoc, 1, &color[0]); // Couleur
+
+    // Bind et activer la texture
+    glUniform1i(textureIdULoc, textureID);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glUniform1i(textureULoc, 0);
+
+    // Attributs Vertex: Positions, UVs et Normales
+    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vboUV);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+    glEnableVertexAttribArray(2);
+
+    // Matériaux (Phong Lighting)
+    glUniform3fv(ambientULoc, 1, &material.ambient_material[0]);
+    glUniform3fv(diffuseULoc, 1, &material.diffuse_material[0]);
+    glUniform3fv(specularULoc, 1, &material.specular_material[0]);
+    glUniform1f(shininessULoc, material.shininess);
+
+    // Bind et draw
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
+
+    // // Dessin récursif pour les enfants
+    // for (const GameObject *child : children) {
+    //     child->draw();
+    // }
+
+    // Désactiver les layouts et delink VAO
+    glBindVertexArray(0);
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+
+    boundingBox.draw();
+}
 
     /* ------------------------- TEXTURES -------------------------*/
 
@@ -443,151 +432,6 @@ public:
         impulsion1 = impulse_factor * normale_contact / getWeight();
         impulsion2 = -impulse_factor * normale_contact / obj2.getWeight();
     }
-
-    void handleCollisionBox(const GameObject& other){
-        if (other.getType() == GameObjectType::PLANE) { // Collision avec le landscape
-            // Collision entre le GameObject et le terrain détectée
-            // Vérifiez la collision avec les AABB
-            if (boundingBox.intersect(other.getBoundingBox())) {
-                // std::cout << "Collision entre le GameObject (" << getName() << ") et le terrain (" << other.getName() << ") détectée" << std::endl;
-                if (!grounded) { // Si elle n'était pas déjà au sol alors beginOverlap
-                    std::cout << "BeginOverlap" << std::endl;
-                    grounded = true;
-                    std::cout << "vitesse avant: " << getVelocity().x << "; " << getVelocity().y << "; " << getVelocity().z << std::endl;
-                    setVelocity(length(getVelocity()) > 1.0f ? getVelocity() * restitutionCoef * glm::vec3(1.0f, -1.0f, 1.0f): glm::vec3(0.0f));
-                    std::cout << "vitesse apres: " << getVelocity().x << "; " << getVelocity().y << "; " << getVelocity().z << std::endl;
-                }
-                // Calcul des impulsions
-                // glm::vec3 impulsion1, impulsion2, normale_contact = glm::normalize(other.getTransform().getPosition() - transform.getPosition());
-                // calculer_impulsions(other, impulsion1, impulsion2, normale_contact);
-                // std::cout << "normale contact: " << normale_contact.x << "; " << normale_contact.y << "; " << normale_contact.z << std::endl;
-                // std::cout << "impulsion: " << impulsion1.x << "; " << impulsion1.y << "; " << impulsion1.z << std::endl;
-                // Régler la position du GameObject sur le terrain
-                // transform.setPosition(glm::vec3(transform.getPosition().x, other.getTransform().getPosition().y, transform.getPosition().z));
-
-                // Réinitialiser la vitesse du GameObject à zéro
-            } else {
-                if (grounded) { // endOverlap
-                    std::cout << "EndOverlap" << std::endl;
-                    grounded = false;
-                }
-            }
-        }
-
-    }
-
-    bool intersectTriangles(const Triangle& t1, const Triangle& t2) {
-        glm::vec3 axes[] = {
-            glm::normalize(glm::cross(t1.v2 - t1.v1, t1.v3 - t1.v1)),
-            glm::normalize(glm::cross(t2.v2 - t2.v1, t2.v3 - t2.v1))
-        };
-
-        // Projection sur les axes
-        for (int i = 0; i < 2; ++i) {
-            float minT1 = glm::dot(t1.v1, axes[i]);
-            float maxT1 = minT1;
-            float minT2 = glm::dot(t2.v1, axes[i]);
-            float maxT2 = minT2;
-
-            float projT1_2 = glm::dot(t1.v2, axes[i]);
-            minT1 = std::min(minT1, projT1_2);
-            maxT1 = std::max(maxT1, projT1_2);
-
-            float projT1_3 = glm::dot(t1.v3, axes[i]);
-            minT1 = std::min(minT1, projT1_3);
-            maxT1 = std::max(maxT1, projT1_3);
-
-            float projT2_2 = glm::dot(t2.v2, axes[i]);
-            minT2 = std::min(minT2, projT2_2);
-            maxT2 = std::max(maxT2, projT2_2);
-
-            float projT2_3 = glm::dot(t2.v3, axes[i]);
-            minT2 = std::min(minT2, projT2_3);
-            maxT2 = std::max(maxT2, projT2_3);
-
-            if (maxT1 < minT2 || maxT2 < minT1) {
-                return false; // Pas d'intersection
-            }
-        }
-
-        // Conditions pour tester l'intersection
-        glm::vec3 dp1 = glm::cross(t1.v1 - t2.v1, t2.v2 - t2.v1);
-        glm::vec3 dq1 = glm::cross(t1.v1 - t2.v2, t2.v3 - t2.v2);
-        glm::vec3 dr1 = glm::cross(t1.v1 - t2.v3, t2.v1 - t2.v3);
-
-        glm::vec3 dp2 = glm::cross(t2.v1 - t1.v1, t1.v2 - t1.v1);
-        glm::vec3 dq2 = glm::cross(t2.v1 - t1.v2, t1.v3 - t1.v2);
-        glm::vec3 dr2 = glm::cross(t2.v1 - t1.v3, t1.v1 - t1.v3);
-
-        if (((glm::dot(dp1, dq1) > 0.0f) && (glm::dot(dp1, dr1) > 0.0f)) || 
-            ((glm::dot(dp2, dq2) > 0.0f) && (glm::dot(dp2, dr2) > 0.0f))) {
-            return true; // Les triangles s'intersectent
-        }
-
-        return false; // Pas d'intersection
-    }
-
-
-    void handleCollision(const GameObject& other) {
-
-        if (type == GameObjectType::PLAYER) { 
-            
-            // Récupération des coordonées mondes 
-            std::vector<glm::vec3> verticesWorld = getVerticesWorld(); 
-            std::vector<glm::vec3> otherVerticesWorld = other.getVerticesWorld(); 
-            std::vector<unsigned short> otherIndices = other.getIndices();
-        
-
-            bool allIntersect = false; 
-        
-            for (int i = 0; i < indices.size(); i+=3) {
-
-                Triangle t1 = {verticesWorld[indices[i]], verticesWorld[indices[i+ 1]], verticesWorld[indices[i+ 2]]};
-
-                // Parcourir les triangles de l'autre GameObject
-                for (int j = 0; j < otherIndices.size(); j+=3) {
-                  
-                    Triangle t2 = {otherVerticesWorld[otherIndices[j]], otherVerticesWorld[otherIndices[j+ 1]], otherVerticesWorld[otherIndices[j+ 2]]};
-
-                    // Vérifier s'ils s'intersectent
-                    if (intersectTriangles(t1, t2)) {
-
-                        allIntersect = true; 
-                        
-                         if(grounded){
-                            float sens = glm::dot(t2.getNormal(), getVelocity()); 
-                            // Si la sphère est sur le sol et sur une pente alors on va utilisé la normale du triangle comme axe de reflexion. 
-                            if(sens < 0){
-                                // vecteur de reflexion
-                                glm::vec3 velocity_reflected = getVelocity() - 2.0f * sens * t2.getNormal();
-                                setVelocity(velocity_reflected);
-
-                            }
-
-                        }else{
-                            setVelocity(length(getVelocity()) > 1.0f ? getVelocity() * restitutionCoef * glm::vec3(1.0f, -1.0f, 1.0f) : glm::vec3(0.0f));
-                            grounded = true; 
-
-                        }
-                        
-                       
-                                    
-                    }
-                    
-                }
-                
-            }
-            if(!allIntersect && grounded){
-             
-                grounded = false; 
-            }
-        }
-          
-      
-    }
-
-
-    bool isGrounded() {return grounded;}
 
     /* ------------------------- UPDATE -------------------------*/
     // Elements à mettre à jour à chaque frame ou tick de mise à jour

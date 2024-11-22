@@ -195,7 +195,7 @@ public:
             if (ImGui::Button(("Select Mesh ##" + std::to_string(id)).c_str())) {
                 IGFD::FileDialogConfig config;
                 config.path = "../data/meshes";
-                ImGuiFileDialog::Instance()->OpenDialog(("##" + std::to_string(id) + " Mesh").c_str(), "Choose Mesh File", ".obj,.off", config);
+                ImGuiFileDialog::Instance()->OpenDialog(("##" + std::to_string(id) + " Mesh").c_str(), "Choose Mesh File", ".off,.obj", config);
             }
 
             if (ImGuiFileDialog::Instance()->Display(("##" + std::to_string(id) + " Mesh").c_str())) {

@@ -9,7 +9,6 @@
 #include <vector>
 #include "code/Camera/Camera.hpp"
 #include "SceneManager.hpp"
-#include "PhysicManager.hpp"
 #include "InputManager.hpp"
 #include "Mesh.hpp"
 
@@ -24,14 +23,12 @@ public :
 
     Camera *camera; 
     SceneManager *SM;
-    PhysicManager *PM; 
     InputManager *IM; 
     
 
-    Interface(GLuint _programID, SceneManager *_SM, PhysicManager *_PM, InputManager *_IM, Camera *_camera) :
+    Interface(GLuint _programID, SceneManager *_SM, InputManager *_IM, Camera *_camera) :
     programID(_programID),
     SM(_SM),
-    PM(_PM),
     IM(_IM),
     camera(_camera) {}
 
@@ -268,11 +265,7 @@ public :
                     newObject->setColor(color);  
                 }
                 newObject->setTransform(transform); 
-                newObject->setInitalTransform(transform); 
-                if(physic == true){
-                    newObject->setWeight(poids); 
-                    PM->addObject(newObject); 
-                }
+                newObject->setInitalTransform(transform);
                 SM->addObject(std::move(newObject->ptr));
                 name[0] = '\0';
             }
