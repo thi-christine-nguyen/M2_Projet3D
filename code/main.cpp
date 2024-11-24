@@ -121,6 +121,7 @@ int main( void )
 
     // Création des différents GameObjects
     GameObject *cube = new Mesh("cube", "../data/meshes/cube.obj", 1, "../data/textures/grass.bmp", programID); 
+    camera.setCameraTarget(cube->getTransform().getPosition());
     // GameObject *cube2 = new Mesh("cube2", "../data/meshes/cube.obj", 2, "../data/textures/terrain.png", programID); 
 
 

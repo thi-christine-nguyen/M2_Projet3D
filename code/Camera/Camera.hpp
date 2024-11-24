@@ -23,8 +23,8 @@
 enum class InputMode
 {
 	Fixed,
-	Free,
-	Focus
+	Focus,
+	Free
 };
 
 class Camera
@@ -41,7 +41,7 @@ private:
 	glm::quat	m_rotation{};
 
     // Directions de la caméra
-    glm::vec3 m_target;
+    glm::vec3 m_target{0.f, 0.f, .0f};
     glm::vec3 m_rightDirection;
     glm::vec3 m_upDirection;
 
@@ -154,11 +154,11 @@ public:
 	void activateFocusMode() {
 		m_inputMode = InputMode::Focus;
 		// Place la caméra à une distance initiale de l’acteur (ex. rayon orbital)
-		m_orbitRadius = 10.0f;
+		m_orbitRadius = 40.0f;
 
 		// Aligne la caméra avec un angle de vue par défaut
 		m_orbitYaw = glm::radians(0.0f);     // Par défaut, vue de face
-		m_orbitPitch = glm::radians(30.0f);  // Angle vertical pour une vue en plongée
+		m_orbitPitch = glm::radians(0.0f);  // Angle vertical pour une vue en plongée
 
 		// Position initiale de la caméra
 		m_position = m_focusTarget + glm::vec3(
@@ -176,7 +176,7 @@ public:
 		if (m_inputMode != InputMode::Focus) return; // Si on n'est pas en mode focus, on ne fait rien
 
 		// Contrôles pour ajuster le yaw (rotation horizontale) avec Q et D
-		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 			m_orbitYaw += deltaTime; // Incrémente l'angle horizontal
 		}
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
@@ -184,7 +184,7 @@ public:
 		}
 
 		// Contrôles pour zoomer/dézoomer avec Z et S
-		if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 			m_orbitRadius -= m_zoomSpeed * deltaTime; // Réduit la distance (zoom)
 			m_orbitRadius = glm::max(m_orbitRadius, 2.0f); // Distance minimale pour éviter de passer à travers l'acteur
 		}
@@ -277,6 +277,7 @@ public:
 		// Activer le mode focus avec F
 		if (glfwGetKey(_window, GLFW_KEY_F) == GLFW_PRESS) {
 			activateFocusMode();
+			// m_inputMode = InputMode::Focus;
 		}
 
 		if (glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS) {
