@@ -86,6 +86,9 @@
         "queue": "cpp",
         "ranges": "cpp",
         "span": "cpp",
-        "*.glsl": "cpp"
+        "*.glsl": "cpp",
+        "bitset": "cpp",
+        "codecvt": "cpp",
+        "semaphore": "cpp"
     }
 }

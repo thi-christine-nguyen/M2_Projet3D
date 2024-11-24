@@ -1,57 +1,41 @@
 #ifndef REGULAR_GRID_HPP__
 #define REGULAR_GRID_HPP__
 
-// Include GLEW
 #include <GL/glew.h>
-
-// Include GLM
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <vector>
-#include <algorithm>
 #include <iostream>
-
-#include "variables.hpp"  // Assure-toi d'avoir une variable `programID` pour le shader
-#include "BoundingBox.hpp" // Inclure la classe BoundingBox pour l'héritage
+#include "variables.hpp"
+#include "BoundingBox.hpp"
+#include "Voxel.hpp"  // Inclusion de la nouvelle classe Voxel
 
 class RegularGrid : public BoundingBox {
-
 private:
     GLuint vao = 0;  // Vertex Array Object
     GLuint vbo = 0;  // Vertex Buffer Object
-    GLuint ebo = 0;  // Element Buffer Object (facultatif si indices)
     GLuint colorULoc;
 
-    std::vector<glm::vec3> vertices; // Sommets de la grille
-    std::vector<GLuint> indices;     // Indices pour dessiner les lignes
+    std::vector<glm::vec3> vertices; // Sommets pour le rendu des voxels (wireframe)
+    std::vector<Voxel> voxels;       // Liste des voxels
 
     bool initialized = false;
-
-    int resolution;  // Résolution de la grille (nombre de divisions)
+    int resolution;  // Résolution initiale (base)
 
 public:
-    // --- Constructeur ---
+    // --- Constructeurs ---
     RegularGrid() {}
     RegularGrid(glm::vec3 min, glm::vec3 max, int resolution)
         : BoundingBox(min, max), resolution(resolution) {}
 
-    // --- Accesseurs ---
-    GLuint getVAO() const { return vao; }
-    size_t getIndicesCount() const { return indices.size(); }
-
-    // --- Méthodes principales ---
-
-    // Initialisation des buffers OpenGL
+    // --- Initialisation ---
     void initBuffers() {
         if (initialized) return;
 
-        // Générer les sommets de la grille
-        generateVertices();
+        generateVoxels();
 
-        // Création des VAO, VBO, et éventuellement EBO
+        // Création des VAO et VBO
         glGenVertexArrays(1, &vao);
         glGenBuffers(1, &vbo);
-        glGenBuffers(1, &ebo);
 
         glBindVertexArray(vao);
 
@@ -63,101 +47,183 @@ public:
         glEnableVertexAttribArray(0); // Layout 0 : position
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 
-        // Charger les indices dans l'EBO (si nécessaire)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-
         glBindVertexArray(0); // Delink le VAO
 
         colorULoc = glGetUniformLocation(programID, "color");
         initialized = true;
     }
 
-    void generateVertices() {
-        // Calculer la taille de la grille
+    void generateVoxels() {
+        // Dimensions de la grille
         glm::vec3 gridSize = getMax() - getMin();
-        std::cout << "Grid size: " << gridSize.x << "; " << gridSize.y << "; " << gridSize.z << std::endl;
 
-        // Trouver la taille de voxel uniforme basée sur la résolution
-        float voxelSize = std::min(gridSize.x, std::min(gridSize.y, gridSize.z)) / resolution;
-        std::cout << "Voxel size: " << voxelSize << std::endl;
+        // Taille approximative d'un voxel cubique
+        float initialVoxelSize = gridSize.x / resolution;
 
-        // Ajuster les résolutions pour inclure tout le mesh
+        // Calculer la taille réelle d'un voxel cubique
+        float voxelSize = std::min({gridSize.x / resolution, gridSize.y / resolution, gridSize.z / resolution});
+
+        // Calculer les nouvelles résolutions pour couvrir complètement la grille
         int resolutionX = std::ceil(gridSize.x / voxelSize);
         int resolutionY = std::ceil(gridSize.y / voxelSize);
         int resolutionZ = std::ceil(gridSize.z / voxelSize);
 
-        // Ajuster la taille réelle de la grille pour s'aligner avec les limites
-        float adjustedGridX = resolutionX * voxelSize;
-        float adjustedGridY = resolutionY * voxelSize;
-        float adjustedGridZ = resolutionZ * voxelSize;
+        std::cout << "Voxel size (cubique): " << voxelSize << std::endl;
+        std::cout << "Resolutions adjusted: X=" << resolutionX << ", Y=" << resolutionY << ", Z=" << resolutionZ << std::endl;
 
-        // Calculer les décalages pour centrer la grille si nécessaire
-        glm::vec3 minOffset = getMin();
-        glm::vec3 maxOffset = minOffset + glm::vec3(adjustedGridX, adjustedGridY, adjustedGridZ);
-
-        std::cout << "Adjusted Grid size: " << adjustedGridX << "; " << adjustedGridY << "; " << adjustedGridZ << std::endl;
-
-        // Générer les sommets de la grille
+        voxels.clear();
         vertices.clear();
-        indices.clear();
 
-        for (int y = 0; y <= resolutionY; y++) {
-            for (int x = 0; x <= resolutionX; x++) {
-                for (int z = 0; z <= resolutionZ; z++) {
-                    float offsetX = minOffset.x + x * voxelSize;
-                    float offsetY = minOffset.y + y * voxelSize;
-                    float offsetZ = minOffset.z + z * voxelSize;
+        // Générer les voxels
+        for (int y = 0; y < resolutionY; y++) {
+            for (int x = 0; x < resolutionX; x++) {
+                for (int z = 0; z < resolutionZ; z++) {
+                    glm::vec3 minCorner = getMin() + glm::vec3(x, y, z) * voxelSize;
+                    glm::vec3 center = minCorner + glm::vec3(voxelSize * 0.5f);
 
-                    // Ajouter un sommet
-                    vertices.push_back(glm::vec3(offsetX, offsetY, offsetZ));
+                    // Créer un voxel cubique et l'ajouter à la liste
+                    voxels.emplace_back(center, voxelSize);
 
-                    // Connecter les points pour former la grille
-                    if (x < resolutionX) {
-                        indices.push_back((y * (resolutionX + 1) * (resolutionZ + 1)) + (x * (resolutionZ + 1)) + z);
-                        indices.push_back((y * (resolutionX + 1) * (resolutionZ + 1)) + ((x + 1) * (resolutionZ + 1)) + z);
-                    }
-
-                    if (y < resolutionY) {
-                        indices.push_back((y * (resolutionX + 1) * (resolutionZ + 1)) + (x * (resolutionZ + 1)) + z);
-                        indices.push_back(((y + 1) * (resolutionX + 1) * (resolutionZ + 1)) + (x * (resolutionZ + 1)) + z);
-                    }
-
-                    if (z < resolutionZ) {
-                        indices.push_back((y * (resolutionX + 1) * (resolutionZ + 1)) + (x * (resolutionZ + 1)) + z);
-                        indices.push_back((y * (resolutionX + 1) * (resolutionZ + 1)) + (x * (resolutionZ + 1)) + (z + 1));
-                    }
+                    // Ajouter les sommets pour le rendu
+                    voxels.back().getVertices(vertices);
+                    voxels.back().initializeBuffers();
                 }
             }
         }
-
-        std::cout << "Total vertices: " << vertices.size() << ", Total indices: " << indices.size() << std::endl;
+        std::cout << "Generated " << voxels.size() << " cubic voxels." << std::endl;
     }
 
-    // Dessiner la grille
+    void testVoxelContainment(const std::function<bool(const Voxel&)>& isInsideMesh) {
+        // Tester si chaque voxel contient une partie du mesh
+        for (auto& voxel : voxels) {
+            voxel.isEmpty = !isInsideMesh(voxel);
+        }
+    }
+
+    bool intersectRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDir, 
+                            const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, float& t) {
+        const float EPSILON = 1e-6f;
+        glm::vec3 edge1 = v1 - v0;
+        glm::vec3 edge2 = v2 - v0;
+        glm::vec3 h = glm::cross(rayDir, edge2);
+        float a = glm::dot(edge1, h);
+        
+        if (a > -EPSILON && a < EPSILON) return false; // Rayon parallèle au triangle
+
+        float f = 1.0f / a;
+        glm::vec3 s = rayOrigin - v0;
+        float u = f * glm::dot(s, h);
+        if (u < 0.0f || u > 1.0f) return false;
+
+        glm::vec3 q = glm::cross(s, edge1);
+        float v = f * glm::dot(rayDir, q);
+        if (v < 0.0f || u + v > 1.0f) return false;
+
+        t = f * glm::dot(edge2, q);
+        return t > EPSILON; // Intersection trouvée
+    }
+
+    void voxelizeMesh(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices) {
+        if (indices.size() % 3 != 0) {
+            std::cerr << "Error: The index data is not valid. Must be a multiple of 3 (triangles)." << std::endl;
+            return;
+        }
+
+        if (indices.empty() || vertices.empty()) {
+            std::cerr << "Error: Mesh data is empty. Ensure you have valid indices and vertices." << std::endl;
+            return;
+        }
+
+        // Parcourir chaque voxel
+        for (auto& voxel : voxels) {
+            glm::vec3 rayOrigin = voxel.center;
+            glm::vec3 rayDir(1.0f, 0.0f, 0.0f); // Rayon parallèle à l'axe X
+            int intersectionCount = 0;
+
+            // Tester chaque triangle du maillage
+            for (size_t i = 0; i < indices.size(); i += 3) {
+                // Récupérer les indices des sommets du triangle
+                unsigned short idx0 = indices[i];
+                unsigned short idx1 = indices[i + 1];
+                unsigned short idx2 = indices[i + 2];
+
+                // Récupérer les positions des sommets à partir de la liste `vertices`
+                const glm::vec3& v0 = vertices[idx0];
+                const glm::vec3& v1 = vertices[idx1];
+                const glm::vec3& v2 = vertices[idx2];
+
+                // Tester l'intersection avec le triangle
+                float t; // Distance de l'intersection le long du rayon
+                if (intersectRayTriangle(rayOrigin, rayDir, v0, v1, v2, t)) {
+                    intersectionCount++;
+                }
+            }
+
+            // Utiliser la parité pour déterminer si le voxel est "à l'intérieur"
+            voxel.isEmpty = (intersectionCount % 2 == 0); // Pair -> à l'extérieur
+        }
+
+        std::cout << "Voxelization complete: " << voxels.size() << " voxels processed." << std::endl;
+    }
+
+    void printGrid() const {
+        // Dimensions de la grille
+        glm::vec3 gridSize = getMax() - getMin();
+
+        // Calculer la taille réelle d'un voxel cubique
+        float voxelSize = std::min({gridSize.x / resolution, gridSize.y / resolution, gridSize.z / resolution});
+
+        // Calculer les résolutions ajustées pour chaque dimension
+        int resolutionX = std::ceil(gridSize.x / voxelSize);
+        int resolutionY = std::ceil(gridSize.y / voxelSize);
+        int resolutionZ = std::ceil(gridSize.z / voxelSize);
+
+        // Afficher la grille sous forme de 1 et 0
+        std::cout << "Voxel Grid (1 = filled, 0 = empty):\n";
+
+        // Parcourir chaque voxel
+        for (int y = 0; y < resolutionY; ++y) {
+            for (int z = 0; z < resolutionZ; ++z) {
+                for (int x = 0; x < resolutionX; ++x) {
+                    // Trouver le voxel correspondant
+                    int index = y * resolutionZ * resolutionX + z * resolutionX + x;
+                    const Voxel& voxel = voxels[index];
+
+                    // Afficher 1 si le voxel est rempli, sinon afficher 0
+                    std::cout << (voxel.isEmpty ? '0' : '1') << " ";
+                }
+                std::cout << std::endl; // Nouvelle ligne après chaque ligne de voxels
+            }
+            std::cout << std::endl; // Séparer les couches de voxels
+        }
+    }
+
+    // --- Dessin ---
     void draw() const {
         if (!initialized) {
             std::cerr << "RegularGrid not initialized! Call initBuffers() first." << std::endl;
             return;
         }
 
-        // Activer le VAO de la grille
-        glBindVertexArray(vao);
-        glm::vec4 color {0.f, 1.f, 0.f, 1.f};  // Vert par défaut
-        glUniform4fv(colorULoc, 1, &color[0]); // Couleur
-        glLineWidth(1.f);
+        // glBindVertexArray(vao);
 
-        // Dessiner les lignes
-        glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, 0);
+        // // Dessiner les voxels en wireframe
+        // glm::vec4 color {0.f, 1.f, 0.f, 1.f};  // Vert par défaut
+        // glUniform4fv(colorULoc, 1, &color[0]);
+        // glLineWidth(1.f);
 
-        glBindVertexArray(0);
+        // glDrawArrays(GL_LINES, 0, vertices.size());
+        for (auto& voxel : voxels) {
+            voxel.render();
+        }
+
+        // glBindVertexArray(0);
     }
 
-    // Destructeur
+    // --- Destructeur ---
     ~RegularGrid() {
         if (initialized) {
             glDeleteBuffers(1, &vbo);
-            glDeleteBuffers(1, &ebo);
             glDeleteVertexArrays(1, &vao);
         }
     }

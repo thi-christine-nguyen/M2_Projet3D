@@ -151,6 +151,8 @@ public:
         glm::vec3 max = boundingBox.getMax();
         grid = RegularGrid(min, max, 10);
         grid.initBuffers();
+        grid.voxelizeMesh(indices, vertices);
+        // grid.printGrid();
         // std::cout << "Initialisation of bounding box done : min(" << min.x << "; " << min.y << "; " << min.z << ") / max(" << max.x << "; " << max.y << "; " << max.z << ")" << std::endl;
     }
 
