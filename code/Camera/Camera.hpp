@@ -79,8 +79,8 @@ public:
 	void init()
 	{
 		m_fovDegree = 45.0f;
-		m_position = glm::vec3(8.f, 40.f, 0.f);
-		m_eulerAngle = glm::vec3(glm::radians(-90.f), glm::radians(0.f), 0.f);
+		m_position = glm::vec3(0.f, 0.f, 3.f);
+		m_eulerAngle = glm::vec3(glm::radians(-180.f), glm::radians(180.f), 0.f);
 		m_rotation = glm::quat{};
 		m_translationSpeed = 15.0f;
 		m_rotationSpeed = 1.0f;
@@ -118,7 +118,7 @@ public:
 			m_rotation = m_savedRotation;
             m_inputMode = m_savedInputMode;
             m_stateSaved = false; // Optionnel, on peut garder l'état pour une restauration future
-			// updateCameraRotation();
+			updateCameraRotation();
 			Camera_Helper::computeFinalView(m_projectionMatrix, m_viewMatrix, m_position, m_rotation, m_fovDegree);
         }
     }
@@ -251,6 +251,7 @@ public:
 			}
 		}
 	}
+
 	void updateCameraRotation()
 	{
 		// Convertir les angles d'Euler en quaternion pour la rotation

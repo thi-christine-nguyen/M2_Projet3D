@@ -14,65 +14,113 @@ public:
 
     GLuint VAO;        // Vertex Array Object
     GLuint VBO;        // Vertex Buffer Object
+    GLuint EBO;        // Element Buffer Object (pour les indices)
+    std::vector<glm::vec3> vertices; // Sommets du voxel (8 sommets)
+    std::vector<unsigned int> indices; // Indices pour former les triangles
 
     // --- Constructeurs ---
-    Voxel() : center(0.0f), size(1.0f), isEmpty(true), VAO(0), VBO(0) {}
-    Voxel(glm::vec3 center, float size) : center(center), size(size), isEmpty(true), VAO(0), VBO(0) {}
-
-    ~Voxel() {
-        glDeleteBuffers(1, &VBO);
-        glDeleteVertexArrays(1, &VAO);
+    Voxel() : center(0.0f), size(1.0f), isEmpty(true), VAO(0), VBO(0), EBO(0) {}
+    Voxel(glm::vec3 center, float size) : center(center), size(size), isEmpty(true), VAO(0), VBO(0), EBO(0) {
+        generateVertices(); // Génération des sommets et indices au moment de la création
+        initializeBuffers(); // Création des buffers OpenGL
     }
 
-    // --- Génération des sommets du voxel ---
-    void getVertices(std::vector<glm::vec3>& vertices) const {
+    // --- Génération des sommets et indices ---
+    void generateVertices() {
         glm::vec3 halfSize(size * 0.5f);
 
-        // Calculer les 8 sommets du cube
-        glm::vec3 v0 = center + glm::vec3(-halfSize.x, -halfSize.y, -halfSize.z);
-        glm::vec3 v1 = center + glm::vec3(halfSize.x, -halfSize.y, -halfSize.z);
-        glm::vec3 v2 = center + glm::vec3(halfSize.x, halfSize.y, -halfSize.z);
-        glm::vec3 v3 = center + glm::vec3(-halfSize.x, halfSize.y, -halfSize.z);
+        // Définir les 8 sommets du cube
+        vertices = {
+            center + glm::vec3(-halfSize.x, -halfSize.y, -halfSize.z), // v0
+            center + glm::vec3(halfSize.x, -halfSize.y, -halfSize.z),  // v1
+            center + glm::vec3(halfSize.x, halfSize.y, -halfSize.z),   // v2
+            center + glm::vec3(-halfSize.x, halfSize.y, -halfSize.z),  // v3
+            center + glm::vec3(-halfSize.x, -halfSize.y, halfSize.z),  // v4
+            center + glm::vec3(halfSize.x, -halfSize.y, halfSize.z),   // v5
+            center + glm::vec3(halfSize.x, halfSize.y, halfSize.z),    // v6
+            center + glm::vec3(-halfSize.x, halfSize.y, halfSize.z)    // v7
+        };
 
-        glm::vec3 v4 = center + glm::vec3(-halfSize.x, -halfSize.y, halfSize.z);
-        glm::vec3 v5 = center + glm::vec3(halfSize.x, -halfSize.y, halfSize.z);
-        glm::vec3 v6 = center + glm::vec3(halfSize.x, halfSize.y, halfSize.z);
-        glm::vec3 v7 = center + glm::vec3(-halfSize.x, halfSize.y, halfSize.z);
+        // Définir les indices pour former les triangles (2 triangles par face)
+        indices = {
+            // Face arrière (-Z)
+            0, 1, 2,
+            0, 2, 3,
 
-        // Ajouter les sommets dans l'ordre des lignes (wireframe)
-        vertices.insert(vertices.end(), {v0, v1, v1, v2, v2, v3, v3, v0,
-                                         v4, v5, v5, v6, v6, v7, v7, v4,
-                                         v0, v4, v1, v5, v2, v6, v3, v7});
+            // Face avant (+Z)
+            4, 5, 6,
+            4, 6, 7,
+
+            // Face gauche (-X)
+            0, 3, 7,
+            0, 7, 4,
+
+            // Face droite (+X)
+            1, 2, 6,
+            1, 6, 5,
+
+            // Face inférieure (-Y)
+            0, 1, 5,
+            0, 5, 4,
+
+            // Face supérieure (+Y)
+            3, 2, 6,
+            3, 6, 7
+        };
     }
 
     // --- Initialisation des buffers OpenGL ---
     void initializeBuffers() {
-        std::vector<glm::vec3> vertices;
-        getVertices(vertices);
+        if (VAO != 0) return; // Empêcher la réinitialisation
 
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
 
+        std::cout << "VAO ID: " << VAO << ", VBO ID: " << VBO << ", EBO ID: " << EBO << std::endl;
         glBindVertexArray(VAO);
 
+        // Charger les sommets dans le VBO
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
 
-        glEnableVertexAttribArray(0); // Activer l'attribut 0
+        // Charger les indices dans l'EBO
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+        // Configurer les attributs de vertex
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+        glEnableVertexAttribArray(0); // Activer l'attribut 0 (position)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
     }
 
     // --- Rendu du voxel ---
-    void render() const {
-        if (isEmpty) return;
+    void draw() const {
+        if (isEmpty) return; // Ne pas dessiner les voxels vides
 
         glBindVertexArray(VAO);
-        glDrawArrays(GL_LINES, 0, 24);  // 24 points pour un cube en wireframe
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); // Lier l'EBO
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
+        // std::cout << "Rendering voxel at: " << center.x << "; " << center.y << "; " << center.z << std::endl;
         glBindVertexArray(0);
+    }
+
+    // --- Destructeur ---
+    ~Voxel() {
+        if (VAO != 0) {
+            glDeleteVertexArrays(1, &VAO);
+            VAO = 0;
+        }
+        if (VBO != 0) {
+            glDeleteBuffers(1, &VBO);
+            VBO = 0;
+        }
+        if (EBO != 0) {
+            glDeleteBuffers(1, &EBO);
+            EBO = 0;
+        }
     }
 };
 

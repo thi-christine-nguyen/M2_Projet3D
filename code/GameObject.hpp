@@ -145,12 +145,9 @@ public:
 
     // Initialise la bounding box selon les vertices du GameObject
     void initBoundingBox() {
-        std::vector<glm::vec3> verticesWorld = getVerticesWorld(); 
+        std::vector<glm::vec3> verticesWorld = getVerticesWorld();
         boundingBox.init(verticesWorld);
-        glm::vec3 min = boundingBox.getMin();
-        glm::vec3 max = boundingBox.getMax();
-        grid = RegularGrid(min, max, 10);
-        grid.initBuffers();
+        grid.init(verticesWorld, 2);
         grid.voxelizeMesh(indices, vertices);
         // grid.printGrid();
         // std::cout << "Initialisation of bounding box done : min(" << min.x << "; " << min.y << "; " << min.z << ") / max(" << max.x << "; " << max.y << "; " << max.z << ")" << std::endl;
@@ -167,18 +164,18 @@ public:
     // Méthode pour définir la transformation de cet objet
     void setTransform(const Transform& newTransform) {
         transform = newTransform;
-        initBoundingBox();
+        // initBoundingBox();
     }
 
     void setInitalTransform(const Transform& newTransform) {
         initialTransform = newTransform;
-        initBoundingBox();
+        // initBoundingBox();
     }
 
     // Méthode pour modifier la position de cet objet
     void setPosition(glm::vec3 pos) {
         transform.setPosition(pos);
-        initBoundingBox();
+        // initBoundingBox();
     }
 
     // Méthodes pour accéder et modifier le parent de cet objet
@@ -341,19 +338,19 @@ public:
         shininessULoc = glGetUniformLocation(programID, "material.shininess");
 
 
-        // Binds + Chargement des buffers avec les donnéees de l'objets courant
-        // Vertices
-        glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
-        // UV
-        glBindBuffer(GL_ARRAY_BUFFER, vboUV);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * uvs.size(), &uvs[0], GL_STATIC_DRAW);
-        // Indices
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * indices.size(), &indices[0], GL_STATIC_DRAW);
-        // Normales
-        glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
+        // // Binds + Chargement des buffers avec les donnéees de l'objets courant
+        // // Vertices
+        // glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+        // glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+        // // UV
+        // glBindBuffer(GL_ARRAY_BUFFER, vboUV);
+        // glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * uvs.size(), &uvs[0], GL_STATIC_DRAW);
+        // // Indices
+        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
+        // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short) * indices.size(), &indices[0], GL_STATIC_DRAW);
+        // // Normales
+        // glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
+        // glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
     }
 
     void DeleteBuffers(GLuint programID)
@@ -378,39 +375,39 @@ virtual void draw() const
     }
 
     // --- Dessiner l'objet principal ---
-    glBindVertexArray(vao); // Bind le VAO
+    // glBindVertexArray(vao); // Bind le VAO
     glUniform1i(typeULoc, type); // Envoi du type
     glUniformMatrix4fv(transformULoc, 1, GL_FALSE, &getWorldBasedTransform()[0][0]); // Matrice de transformation
     glUniform4fv(colorULoc, 1, &color[0]); // Couleur
 
-    // Bind et activer la texture
-    glUniform1i(textureIdULoc, textureID);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glUniform1i(textureULoc, 0);
+    // // Bind et activer la texture
+    // glUniform1i(textureIdULoc, textureID);
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, textureID);
+    // glUniform1i(textureULoc, 0);
 
-    // Attributs Vertex: Positions, UVs et Normales
-    glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
-    glEnableVertexAttribArray(0);
+    // // Attributs Vertex: Positions, UVs et Normales
+    // glBindBuffer(GL_ARRAY_BUFFER, vboVertices);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+    // glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vboUV);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
-    glEnableVertexAttribArray(1);
+    // glBindBuffer(GL_ARRAY_BUFFER, vboUV);
+    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
+    // glEnableVertexAttribArray(1);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
-    glEnableVertexAttribArray(2);
+    // glBindBuffer(GL_ARRAY_BUFFER, vboNormals);
+    // glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+    // glEnableVertexAttribArray(2);
 
-    // Matériaux (Phong Lighting)
+    // // Matériaux (Phong Lighting)
     glUniform3fv(ambientULoc, 1, &material.ambient_material[0]);
     glUniform3fv(diffuseULoc, 1, &material.diffuse_material[0]);
     glUniform3fv(specularULoc, 1, &material.specular_material[0]);
     glUniform1f(shininessULoc, material.shininess);
 
-    // Bind et draw
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
+    // // Bind et draw
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
+    // glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
 
     // // Dessin récursif pour les enfants
     // for (const GameObject *child : children) {
@@ -418,12 +415,12 @@ virtual void draw() const
     // }
 
     // Désactiver les layouts et delink VAO
-    glBindVertexArray(0);
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(2);
+    // glBindVertexArray(0);
+    // glDisableVertexAttribArray(0);
+    // glDisableVertexAttribArray(1);
+    // glDisableVertexAttribArray(2);
 
-    boundingBox.draw();
+    // boundingBox.draw();
     grid.draw();
 }
 

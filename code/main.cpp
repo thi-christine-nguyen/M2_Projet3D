@@ -181,7 +181,7 @@ int main( void )
         //Imgui 
         interface.createFrame();
 
-        // camera.setCameraTarget(basketBall->getTransform().getPosition());
+        // camera.setCameraTarget(cube->getTransform().getPosition());
         interface.update(deltaTime, window);
         camera.update(deltaTime, window);
         camera.sendToShader(programID); 
