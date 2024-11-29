@@ -58,23 +58,23 @@ file( GLOB IMGUIC imgui/*.cpp)
 file( GLOB IMGUIH imgui/*.h) 
 add_executable(main
         code/main.cpp
-		code/Camera/Camera.hpp
-		code/Camera/Camera_Helper.hpp
+		code/Shader.hpp
+		code/GameObject.cpp
+		code/GameObject.hpp
+		code/Mesh.cpp
+		code/Mesh.hpp
+		code/texture.cpp
+		code/texture.hpp
+		code/stb_image.hpp
+		code/stb_image.cpp
+		code/Camera.hpp
+		code/Camera.cpp
+		code/Camera_Helper.hpp
+		code/Interface.cpp
+		code/Interface.hpp
+		code/SceneManager.hpp
+		code/SceneManager.cpp
 
-	common/shader.cpp
-	common/shader.hpp
-	common/controls.cpp
-	common/controls.hpp
-	common/texture.cpp
-	common/texture.hpp
-	common/objloader.cpp
-	common/objloader.hpp
-	common/vboindexer.cpp
-	common/vboindexer.hpp
-	common/stb_image.cpp
-	common/stb_image.hpp
-
-	
         code/vertex_shader.glsl
         code/fragment_shader.glsl
 					${IMGUIH}
