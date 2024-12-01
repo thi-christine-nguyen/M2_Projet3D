@@ -200,8 +200,8 @@ void Camera::resetWithTransition(float _deltaTime) {
 	glm::vec3 currentEulerAngles = m_eulerAngle;
 
 	// Définir les nouvelles valeurs pour la réinitialisation
-	glm::vec3 resetPosition = glm::vec3(8.f, 40.f, 0.f);
-	glm::vec3 resetEulerAngles = glm::vec3(glm::radians(-90.f), 0.f, 0.f);
+	glm::vec3 resetPosition = glm::vec3(0.f, 0.f, 5.f);
+	glm::vec3 resetEulerAngles = glm::vec3(0.f, 0.f, 0.f);
 
 	// Définir la durée de la transition
 	float transitionTime = m_transitionDuration; // Utilisez la valeur définie dans ImGui

@@ -2,8 +2,8 @@
 /* ------------------------- CONSTRUCTOR -------------------------*/
 
 // Constructeur prenant une transformation optionnelle
-GameObject::GameObject(std::string name = "", int textId = 0, const Transform& initialTransform = Transform(), const Material& material = Material(), const Shader &shader = Shader("", ""))
-    : name(name), textureID(textId), transform(initialTransform), material(material), shader(shader) {
+GameObject::GameObject(std::string name = "", int textId = 0, const Transform& initialTransform = Transform(), const Material& _material = Material(), const Shader &shader = Shader("", ""))
+    : name(name), textureID(textId), transform(initialTransform), material(_material), shader(shader) {
         ptr.reset(this);
 }
 
@@ -59,8 +59,12 @@ int GameObject::setId(int _id){
     id = _id;
 }
 
-void GameObject::setMaterial(Material m){
-    material = m; 
+void GameObject::setMaterial(const Material& _material){
+    material = _material; 
+}
+
+void GameObject::setAmbient(glm::vec3 _ambient) {
+    material.setAmbient(_ambient);
 }
 
 /* ------------------------- TRANSFORMATIONS -------------------------*/
@@ -113,10 +117,18 @@ void GameObject::DeleteBuffers()
 
 void GameObject::draw(Shader &shader)
 {
+   
     // Si Wireframe, passe en mode GL_LINE
     if (isWireframe) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }else{
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+     // Matériaux (Phong Lighting)
+    glUniform3fv(glGetUniformLocation(shader.ID, "material.ambient"), 1, glm::value_ptr(material.getAmbient()));
+    glUniform3fv(glGetUniformLocation(shader.ID, "material.diffuse"), 1, glm::value_ptr(material.getDiffuse()));
+    glUniform3fv(glGetUniformLocation(shader.ID, "material.specular"), 1, glm::value_ptr(material.getSpecular()));
+    glUniform1f(glGetUniformLocation(shader.ID, "material.shininess"), material.getShininess());
 
     // --- Dessiner l'objet principal ---
     glBindVertexArray(vao); // Bind le VAO
@@ -146,11 +158,7 @@ void GameObject::draw(Shader &shader)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
 
-    // Matériaux (Phong Lighting)
-    glUniform3fv(glGetUniformLocation(shader.ID, "material.ambient"), 1, &material.ambient_material[0]);
-    glUniform3fv(glGetUniformLocation(shader.ID, "material.diffuse"), 1, &material.diffuse_material[0]);
-    glUniform3fv(glGetUniformLocation(shader.ID, "material.specular"), 1, &material.specular_material[0]);
-    glUniform1f(glGetUniformLocation(shader.ID, "material.shininess"), material.shininess);
+   
 
     // Désactiver les layouts et delink VAO
     glBindVertexArray(0);
@@ -216,6 +224,7 @@ void GameObject::updateInterfaceTransform(float _deltaTime) {
     transform.setPosition(position);
     transform.setRotation(rotation);
     transform.setScale(scale);
+    
 
     if (ImGui::Button(("Reset " + std::to_string(id) + " Parameters").c_str())) {
         resetParameters();
