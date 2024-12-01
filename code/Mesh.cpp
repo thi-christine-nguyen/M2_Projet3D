@@ -222,12 +222,11 @@ void Mesh::updateInterfaceTransform(float _deltaTime){
             if (ImGuiFileDialog::Instance()->IsOk()) {
                 newtexturePath = ImGuiFileDialog::Instance()->GetFilePathName();
                 textureID = loadTexture2DFromFilePath(newtexturePath.c_str());
-                glUniform1i(glGetUniformLocation(shader.ID, "gameObjectTexture"), 0);
             }
             ImGuiFileDialog::Instance()->Close();
         }
 
-        if(texturePath != "" ){
+        if(newtexturePath != "" ){
             if (ImGui::Button(("Cancel texture ##" + std::to_string(id)).c_str())){
                 newtexturePath = ""; 
                 textureID = 0; 
@@ -274,23 +273,24 @@ void Mesh::updateInterfaceTransform(float _deltaTime){
 
         ImGui::Text("Material Settings");
 
-        glm::vec3 ambient = material.getAmbient();
-        if (ImGui::DragFloat3(("Ambient ##" + std::to_string(id)).c_str(), glm::value_ptr(ambient), 0.001f)) {
-            material.setAmbient(ambient);
-        }
+        glm::vec3 ambient = material.getAmbient(); 
+        ImGui::DragFloat3(("Ambient ##" + std::to_string(id)).c_str(), glm::value_ptr(ambient), 0.001f); 
+            
+        
         glm::vec3 diffuse = material.getDiffuse();
-        if (ImGui::DragFloat3(("Diffuse ##" + std::to_string(id)).c_str(), glm::value_ptr(diffuse), 0.001f)) {
-            material.setDiffuse(diffuse);
-        }
+        ImGui::DragFloat3(("Diffuse ##" + std::to_string(id)).c_str(), glm::value_ptr(diffuse), 0.001f); 
+
         glm::vec3 specular = material.getSpecular();
-        if (ImGui::DragFloat3(("Specular ##" + std::to_string(id)).c_str(), glm::value_ptr(specular), 0.001f)) {
-            material.setSpecular(specular);
-        }
-        // Shininess
+        ImGui::DragFloat3(("Specular ##" + std::to_string(id)).c_str(), glm::value_ptr(specular), 0.001f); 
+      
         float shininess = material.getShininess();
-        if (ImGui::SliderFloat(("Shininess ##" + std::to_string(id)).c_str(), &shininess, 1.0f, 128.0f)) {
-            material.setShininess(shininess);
-        }
+        ImGui::SliderFloat(("Shininess ##" + std::to_string(id)).c_str(), &shininess, 1.0f, 128.0f); 
+           
+        material.setAmbient(ambient); 
+        material.setDiffuse(diffuse);
+        material.setSpecular(specular);
+        material.setShininess(shininess);
+        
     }
     ImGui::Separator();
     GameObject::updateInterfaceTransform(_deltaTime);

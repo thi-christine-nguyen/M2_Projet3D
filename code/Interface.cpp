@@ -45,7 +45,7 @@ void Interface::deleteFrame(){
 void Interface::addGameObject(float _deltaTime, GLFWwindow* _window){
     static char name[128]; 
     if (name[0] == '\0') {
-        // std::snprintf(name, sizeof(name), "Objet %zu", SM->getObjects().size() + 1);
+        std::snprintf(name, sizeof(name), "Objet %zu", SM->getObjects().size() + 1);
     }
 
     static int resolution;
@@ -66,7 +66,7 @@ void Interface::addGameObject(float _deltaTime, GLFWwindow* _window){
     if (ImGui::Button("Select Mesh")) {
         IGFD::FileDialogConfig config;
         config.path = "../data/meshes";
-        ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshDlgKey", "Choose Mesh File", ".obj, .off", config);
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseMeshDlgKey", "Choose Mesh File", ".off", config);
     }
 
     if (ImGuiFileDialog::Instance()->Display("ChooseMeshDlgKey")) {
@@ -199,16 +199,6 @@ void Interface::addGameObject(float _deltaTime, GLFWwindow* _window){
     transform.setPosition(position);
     transform.setRotation(rotation);
     transform.setScale(scale);
-
-    // Est ce que l'objet contient de la physique 
-    ImGui::Text("Enable gravity");
-    ImGui::SameLine();
-    ImGui::Checkbox("##Physic", &physic);
-
-    if(physic == true){
-        ImGui::Text("Poids de l'objet");
-        ImGui::SliderFloat("Poids", &poids, 0.0f, 10.0f);
-    }
     
     // Création de l'objet
     if (ImGui::Button("Add Object")) {

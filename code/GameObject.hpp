@@ -98,7 +98,8 @@ public:
     std::vector<unsigned short> getIndices() const;
     std::vector<glm::vec3> getVertices() const;
     int setId(int _id);
-    void setMaterial(Material m);
+    void setMaterial(const Material& _material);
+    void setAmbient(glm::vec3 _ambient);
 
     /* ----------------------------- UPDATE -----------------------------*/
     void update(float deltaTime);
