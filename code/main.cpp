@@ -5,7 +5,6 @@
 #include "Shader.hpp"
 #include "Mesh.hpp"
 #include "Camera.hpp"
-#include "Camera_Helper.hpp"
 #include "Interface.hpp"
 #include "SceneManager.hpp"
 
@@ -30,8 +29,8 @@ int main( void )
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
-    int window_width = static_cast<int>(mode->width * 0.8);
-    int window_height = static_cast<int>(mode->height * 1.0);
+    int window_width = static_cast<int>(mode->width * 0.5);
+    int window_height = static_cast<int>(mode->height * 0.8);;
 
     // Open a window and create its OpenGL context
     char title[50] = "Projet 3D - Voxelisation";
@@ -133,7 +132,11 @@ int main( void )
         interface.update(deltaTime, window); 
 
         camera.update(deltaTime, window); 
-        camera.sendToShader(shader.ID);
+        // camera.sendToShader(shader.ID);
+        float aspectRatio = static_cast<float>(window_width) / static_cast<float>(window_height);
+        camera.sendToShader(shader.ID, aspectRatio);
+
+
         SM->update(deltaTime);
         // SM->draw(voxelShader);
 
@@ -141,9 +144,9 @@ int main( void )
         mesh->draw(shader);
         // mesh->draw(shader);
 
-        voxelShader.use();
-        camera.sendToShader(voxelShader.ID);
-        mesh->getGrid().draw(voxelShader.ID);
+        // voxelShader.use();
+        // camera.sendToShader(voxelShader.ID);
+        // mesh->getGrid().draw(voxelShader.ID);
 
         interface.renderFrame();
 
