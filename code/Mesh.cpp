@@ -7,7 +7,7 @@ Mesh::Mesh(std::string name, const char *path, int textureID, const char *textur
     strncpy(newName, name.c_str(), sizeof(newName) - 1); 
     this->textureID = textureID;
     this->texturePath = texturePath;
-    this->shader = shader; 
+    this->shader = shader;
     
     indices.clear();
     vertices.clear();
@@ -17,6 +17,8 @@ Mesh::Mesh(std::string name, const char *path, int textureID, const char *textur
     loadModel(path);
     meshPath = path; 
     newtexturePath = texturePath; 
+
+    grid = RegularGrid(vertices, 10);
 
     this->GenerateBuffers();
 }
@@ -39,6 +41,8 @@ Mesh::Mesh(std::string name, const char *path, glm::vec4 color, Shader &shader)
     loadModel(path);
     meshPath = path; 
     newtexturePath = "";
+
+    grid = RegularGrid(vertices, 10);
 
     this->GenerateBuffers();
 }
@@ -295,4 +299,10 @@ void Mesh::updateInterfaceTransform(float _deltaTime){
     ImGui::Separator();
     GameObject::updateInterfaceTransform(_deltaTime);
     
+}
+
+void Mesh::draw(Shader &shader)
+{
+    GameObject::draw(shader);
+    grid.draw(shader.ID);
 }

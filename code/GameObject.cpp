@@ -117,7 +117,6 @@ void GameObject::DeleteBuffers()
 
 void GameObject::draw(Shader &shader)
 {
-   
     // Si Wireframe, passe en mode GL_LINE
     if (isWireframe) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -157,8 +156,6 @@ void GameObject::draw(Shader &shader)
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
-
-   
 
     // Désactiver les layouts et delink VAO
     glBindVertexArray(0);

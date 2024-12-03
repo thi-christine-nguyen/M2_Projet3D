@@ -116,7 +116,6 @@ public:
     void draw(Shader &shader);
 
     /* ------------------------- TEXTURES -------------------------*/
-
     void initTexture();
 
     /* ------------------------- INTERFACE -------------------------*/

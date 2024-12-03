@@ -10,7 +10,7 @@
 #include <GL/glew.h>
 #include "Shader.hpp"
 #include "Interface.hpp"
-
+#include "RegularGrid.hpp"
 
 class Mesh : public GameObject {
 private :
@@ -19,6 +19,7 @@ private :
     char newName[128]; 
     std::string meshPath; 
     std::string newtexturePath;
+    RegularGrid grid;
 
 public :
 
@@ -28,6 +29,7 @@ public :
     bool loadOBJ(const char *path);
     bool loadOFF(const char *path);
     void updateInterfaceTransform(float _deltaTime);
+    void draw(Shader &shader);
 
 };
 #endif
