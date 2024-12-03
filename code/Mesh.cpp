@@ -304,5 +304,4 @@ void Mesh::updateInterfaceTransform(float _deltaTime){
 void Mesh::draw(Shader &shader)
 {
     GameObject::draw(shader);
-    grid.draw(shader.ID);
 }

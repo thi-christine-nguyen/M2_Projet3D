@@ -67,9 +67,9 @@ int main( void )
     // glEnable(GL_CULL_FACE);
 
     // Create and compile our GLSL program from the shaders
-    Shader shader = Shader("vertex_shader.glsl", "fragment_shader.glsl" );
+    Shader shader = Shader("vertex_shader.glsl", "fragment_shader.glsl");
     Shader voxelShader = Shader("voxel_vertex_shader.glsl", "voxel_fragment_shader.glsl", "voxel_geometry_shader.glsl" );
-    SceneManager *SM = new SceneManager(shader);
+    SceneManager *SM = new SceneManager();
 
 
     Mesh *mesh = new Mesh("patate", "../data/meshes/sphere.off", glm::vec4(1.0f, 0.f, 0.f, 1.0f), shader);
@@ -83,8 +83,8 @@ int main( void )
     SM->initGameObjectsTexture();
     Interface interface(shader, SM, &camera); 
 
-    shader.use(); 
     voxelShader.use(); 
+    shader.use(); 
 
     glm::vec3 lightPos = glm::vec3(0.0f, 10.0f, 0.0f); // Une position fixe pour la lumière
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);  // Couleur de la lumière (blanc)
@@ -105,7 +105,6 @@ int main( void )
     interface.initImgui(window); 
 
     do{
-     
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -127,7 +126,6 @@ int main( void )
         glEnable(GL_DEPTH_TEST);
         // Use our shader
         shader.use(); 
-        // voxelShader.use();
         // voxelShader.setMat4("model", glm::mat4(1.0f));
         // testShader.use();
 
@@ -137,9 +135,17 @@ int main( void )
         camera.update(deltaTime, window); 
         camera.sendToShader(shader.ID);
         SM->update(deltaTime);
-        SM->draw(shader);
+        // SM->draw(voxelShader);
+
+        // voxelShader.use();
+        mesh->draw(shader);
         // mesh->draw(shader);
-        interface.renderFrame();  
+
+        voxelShader.use();
+        camera.sendToShader(voxelShader.ID);
+        mesh->getGrid().draw(voxelShader.ID);
+
+        interface.renderFrame();
 
         // Swap buffers
         glfwSwapBuffers(window);

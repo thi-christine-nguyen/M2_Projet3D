@@ -25,6 +25,9 @@ public :
 
     Mesh(std::string name, const char *path, int textureID, const char *texturePath, Shader &shader);
     Mesh(std::string name, const char *path, glm::vec4 color, Shader &shader);
+    RegularGrid& getGrid() {
+        return grid;
+    }
     void loadModel(const char *path);
     bool loadOBJ(const char *path);
     bool loadOFF(const char *path);
