@@ -17,18 +17,15 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 
+
+enum class InputMode {
+    Fixed, // Mode fixe
+    Free   // Mode libre
+};
+
 class Camera
 {
-public:
-    Camera();
-
-    void update(float deltaTime, GLFWwindow* window);
-    void scrollCallback(double xOffset, double yOffset);
-    void sendToShader(GLuint programID, float aspectRatio) const;
-
-    glm::mat4 getViewMatrix() const;
-    glm::mat4 getProjectionMatrix(float aspectRatio) const;
-
+    
 private:
     glm::vec3 m_target;         // Target point the camera orbits around
     glm::vec3 m_position;       // Camera position
@@ -41,10 +38,34 @@ private:
     float m_fovDegree;          // Field of view for perspective projection
     double m_lastMouseX;        // Last X position of the mouse
     double m_lastMouseY;        // Last Y position of the mouse
+    float m_movementSpeed; 
+    float m_translationSpeed; 
+    float m_minRotationSpeed; 
+    float m_maxRotationSpeed; 
     double m_scrollOffset;      // Scroll offset for zooming
     glm::quat m_orientation;    // Camera's orientation as a quaternion
-
     glm::mat4 m_viewMatrix;     // Cached view matrix
+
+    bool m_stateSaved = false;
+    glm::vec3 m_savedPosition;
+    glm::quat m_savedOrientation;
+    InputMode m_currentMode = InputMode::Free;
+
+public:
+    Camera();
+
+    void update(float deltaTime, GLFWwindow* window);
+    void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
+    void sendToShader(GLuint programID, float aspectRatio) const;
+
+    glm::mat4 getViewMatrix() const;
+    glm::mat4 getProjectionMatrix(float aspectRatio) const;
+
+    void saveState();
+    bool getSavedState();
+    void restoreState();
+    void setInputMode(InputMode mode);
+
 };
 
 #endif

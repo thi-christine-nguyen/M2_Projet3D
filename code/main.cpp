@@ -30,7 +30,9 @@ int main( void )
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
     int window_width = static_cast<int>(mode->width * 0.5);
-    int window_height = static_cast<int>(mode->height * 0.8);;
+    int window_height = static_cast<int>(mode->height * 0.8);
+    
+    float aspectRatio = static_cast<float>(window_width) / static_cast<float>(window_height);
 
     // Open a window and create its OpenGL context
     char title[50] = "Projet 3D - Voxelisation";
@@ -71,13 +73,13 @@ int main( void )
     SceneManager *SM = new SceneManager();
 
 
-    Mesh *mesh = new Mesh("patate", "../data/meshes/sphere.off", glm::vec4(1.0f, 0.f, 0.f, 1.0f), shader);
+    Mesh *mesh = new Mesh("patate", "../data/meshes/suzanne.off", glm::vec4(1.0f, 0.f, 0.f, 1.0f), shader);
     mesh->setInitalTransform(mesh->getTransform());
     SM->addObject(std::move(mesh->ptr));
 
-    // Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/bear.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);
-    // mesh2->setInitalTransform(mesh2->getTransform());
-    // SM->addObject(std::move(mesh2->ptr));
+    Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/bear.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);
+    mesh2->setInitalTransform(mesh2->getTransform());
+    SM->addObject(std::move(mesh2->ptr));
     
     SM->initGameObjectsTexture();
     Interface interface(shader, SM, &camera); 
@@ -133,15 +135,13 @@ int main( void )
 
         camera.update(deltaTime, window); 
         // camera.sendToShader(shader.ID);
-        float aspectRatio = static_cast<float>(window_width) / static_cast<float>(window_height);
         camera.sendToShader(shader.ID, aspectRatio);
 
-
         SM->update(deltaTime);
-        // SM->draw(voxelShader);
+        SM->draw(shader);
 
         // voxelShader.use();
-        mesh->draw(shader);
+        // mesh->draw(shader);
         // mesh->draw(shader);
 
         // voxelShader.use();
@@ -177,4 +177,5 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
+
 
