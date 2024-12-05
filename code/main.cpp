@@ -5,7 +5,6 @@
 #include "Shader.hpp"
 #include "Mesh.hpp"
 #include "Camera.hpp"
-#include "Camera_Helper.hpp"
 #include "Interface.hpp"
 #include "SceneManager.hpp"
 
@@ -30,8 +29,10 @@ int main( void )
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
-    int window_width = static_cast<int>(mode->width * 0.8);
-    int window_height = static_cast<int>(mode->height * 1.0);
+    int window_width = static_cast<int>(mode->width * 0.5);
+    int window_height = static_cast<int>(mode->height * 0.8);
+    
+    float aspectRatio = static_cast<float>(window_width) / static_cast<float>(window_height);
 
     // Open a window and create its OpenGL context
     char title[50] = "Projet 3D - Voxelisation";
@@ -72,13 +73,13 @@ int main( void )
     SceneManager *SM = new SceneManager();
 
 
-    Mesh *mesh = new Mesh("patate", "../data/meshes/sphere.off", glm::vec4(1.0f, 0.f, 0.f, 1.0f), shader);
+    Mesh *mesh = new Mesh("patate", "../data/meshes/suzanne.off", glm::vec4(1.0f, 0.f, 0.f, 1.0f), shader);
     mesh->setInitalTransform(mesh->getTransform());
     SM->addObject(std::move(mesh->ptr));
 
-    // Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/bear.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);
-    // mesh2->setInitalTransform(mesh2->getTransform());
-    // SM->addObject(std::move(mesh2->ptr));
+    Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/bear.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);
+    mesh2->setInitalTransform(mesh2->getTransform());
+    SM->addObject(std::move(mesh2->ptr));
     
     SM->initGameObjectsTexture();
     Interface interface(shader, SM, &camera); 
@@ -133,17 +134,19 @@ int main( void )
         interface.update(deltaTime, window); 
 
         camera.update(deltaTime, window); 
-        camera.sendToShader(shader.ID);
+        // camera.sendToShader(shader.ID);
+        camera.sendToShader(shader.ID, aspectRatio);
+
         SM->update(deltaTime);
-        // SM->draw(voxelShader);
+        SM->draw(shader);
 
         // voxelShader.use();
-        mesh->draw(shader);
+        // mesh->draw(shader);
         // mesh->draw(shader);
 
-        voxelShader.use();
-        camera.sendToShader(voxelShader.ID);
-        mesh->getGrid().draw(voxelShader.ID);
+        // voxelShader.use();
+        // camera.sendToShader(voxelShader.ID);
+        // mesh->getGrid().draw(voxelShader.ID);
 
         interface.renderFrame();
 
@@ -174,4 +177,5 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
+
 
