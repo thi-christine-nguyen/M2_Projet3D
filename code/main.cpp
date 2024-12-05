@@ -63,7 +63,6 @@ int main( void )
 
     glClearColor(0.8f, 0.8f, 0.8f, 0.0f);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_PROGRAM_POINT_SIZE);
     // Accept fragment if it closer to the camera than the former one
     // glDepthFunc(GL_LESS);
     // Cull triangles which normal is not towards the camera
@@ -80,7 +79,7 @@ int main( void )
     mesh->setInitalTransform(mesh->getTransform());
     SM->addObject(std::move(mesh->ptr));
 
-    RegularGrid grid = RegularGrid(mesh->getVertices(), 1);
+    RegularGrid grid = RegularGrid(mesh->getVertices(), 10);
 
     // Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/bear.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);
     // mesh2->setInitalTransform(mesh2->getTransform());
