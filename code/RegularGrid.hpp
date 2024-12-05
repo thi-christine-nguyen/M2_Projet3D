@@ -31,7 +31,7 @@ public:
 
     void generateVoxels();       // Génère les voxels dans la grille
     void initializeBuffers();    // Prépare les buffers OpenGL
-    void draw(GLuint shaderID); // Rendu des voxels via un shader
+    void draw(GLuint shaderID, glm::mat4 transformMat = glm::mat4(1.0f)); // Rendu des voxels via un shader
     void init(const std::vector<glm::vec3>& vertices);
 
     ~RegularGrid();

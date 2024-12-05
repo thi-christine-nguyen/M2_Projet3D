@@ -7,6 +7,7 @@
 #include "Camera.hpp"
 #include "Interface.hpp"
 #include "SceneManager.hpp"
+#include "RegularGrid.hpp"
 
 // /*******************************************************************************/
 int main( void )
@@ -29,8 +30,8 @@ int main( void )
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
-    int window_width = static_cast<int>(mode->width * 0.5);
-    int window_height = static_cast<int>(mode->height * 0.8);
+    int window_width = static_cast<int>(mode->width * 0.8);
+    int window_height = static_cast<int>(mode->height * 1.0);
     
     float aspectRatio = static_cast<float>(window_width) / static_cast<float>(window_height);
 
@@ -62,6 +63,7 @@ int main( void )
 
     glClearColor(0.8f, 0.8f, 0.8f, 0.0f);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_PROGRAM_POINT_SIZE);
     // Accept fragment if it closer to the camera than the former one
     // glDepthFunc(GL_LESS);
     // Cull triangles which normal is not towards the camera
@@ -70,21 +72,23 @@ int main( void )
     // Create and compile our GLSL program from the shaders
     Shader shader = Shader("vertex_shader.glsl", "fragment_shader.glsl");
     Shader voxelShader = Shader("voxel_vertex_shader.glsl", "voxel_fragment_shader.glsl", "voxel_geometry_shader.glsl" );
+    // Shader voxelShader = Shader("voxel_vertex_shader.glsl", "voxel_fragment_shader.glsl");
     SceneManager *SM = new SceneManager();
 
 
-    Mesh *mesh = new Mesh("patate", "../data/meshes/suzanne.off", glm::vec4(1.0f, 0.f, 0.f, 1.0f), shader);
+    Mesh *mesh = new Mesh("patate", "../data/meshes/sphere.off", glm::vec4(1.0f, 0.f, 0.f, 1.0f), shader);
     mesh->setInitalTransform(mesh->getTransform());
     SM->addObject(std::move(mesh->ptr));
 
-    Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/bear.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);
-    mesh2->setInitalTransform(mesh2->getTransform());
-    SM->addObject(std::move(mesh2->ptr));
+    RegularGrid grid = RegularGrid(mesh->getVertices(), 1);
+
+    // Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/bear.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);
+    // mesh2->setInitalTransform(mesh2->getTransform());
+    // SM->addObject(std::move(mesh2->ptr));
     
     SM->initGameObjectsTexture();
     Interface interface(shader, SM, &camera); 
 
-    voxelShader.use(); 
     shader.use(); 
 
     glm::vec3 lightPos = glm::vec3(0.0f, 10.0f, 0.0f); // Une position fixe pour la lumière
@@ -127,26 +131,19 @@ int main( void )
         glEnable(GL_DEPTH_TEST);
         // Use our shader
         shader.use(); 
-        // voxelShader.setMat4("model", glm::mat4(1.0f));
-        // testShader.use();
 
         interface.createFrame(); 
         interface.update(deltaTime, window); 
 
         camera.update(deltaTime, window); 
-        // camera.sendToShader(shader.ID);
         camera.sendToShader(shader.ID, aspectRatio);
 
         SM->update(deltaTime);
         SM->draw(shader);
 
-        // voxelShader.use();
-        // mesh->draw(shader);
-        // mesh->draw(shader);
-
-        // voxelShader.use();
-        // camera.sendToShader(voxelShader.ID);
-        // mesh->getGrid().draw(voxelShader.ID);
+        voxelShader.use();
+        camera.sendToShader(voxelShader.ID, aspectRatio);
+        grid.draw(voxelShader.ID);
 
         interface.renderFrame();
 

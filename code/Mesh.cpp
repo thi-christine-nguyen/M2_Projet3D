@@ -18,9 +18,7 @@ Mesh::Mesh(std::string name, const char *path, int textureID, const char *textur
     meshPath = path; 
     newtexturePath = texturePath; 
 
-    grid = RegularGrid(vertices, 10);
-
-    this->GenerateBuffers();
+    // this->GenerateBuffers();
 }
 
 Mesh::Mesh(std::string name, const char *path, glm::vec4 color, Shader &shader)
@@ -41,8 +39,6 @@ Mesh::Mesh(std::string name, const char *path, glm::vec4 color, Shader &shader)
     loadModel(path);
     meshPath = path; 
     newtexturePath = "";
-
-    grid = RegularGrid(vertices, 10);
 
     this->GenerateBuffers();
 }

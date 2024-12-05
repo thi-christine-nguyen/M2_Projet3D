@@ -10,7 +10,6 @@
 #include <GL/glew.h>
 #include "Shader.hpp"
 #include "Interface.hpp"
-#include "RegularGrid.hpp"
 
 class Mesh : public GameObject {
 private :
@@ -19,15 +18,12 @@ private :
     char newName[128]; 
     std::string meshPath; 
     std::string newtexturePath;
-    RegularGrid grid;
 
 public :
 
     Mesh(std::string name, const char *path, int textureID, const char *texturePath, Shader &shader);
     Mesh(std::string name, const char *path, glm::vec4 color, Shader &shader);
-    RegularGrid& getGrid() {
-        return grid;
-    }
+
     void loadModel(const char *path);
     bool loadOBJ(const char *path);
     bool loadOFF(const char *path);
