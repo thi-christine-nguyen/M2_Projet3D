@@ -87,7 +87,7 @@ void RegularGrid::initializeBuffers() {
 }
 
 void RegularGrid::draw(GLuint shaderID, glm::mat4 transformMat) {
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // std::cout << shaderID << std::endl;
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &transformMat[0][0]); // Matrice de transformation
