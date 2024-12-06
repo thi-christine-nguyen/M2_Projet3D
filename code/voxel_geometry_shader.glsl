@@ -7,6 +7,7 @@ layout(triangle_strip, max_vertices = 24) out; // Chaque voxel produit jusqu'à 
 in VS_OUT {
     vec4 center;      // Centre en espace local
     float halfSize;   // Taille (demi-côté du voxel)
+    int isEmpty;
 } gs_in[];
 
 // Sorties pour le Fragment Shader
@@ -82,5 +83,6 @@ void main() {
     vec3 worldCenter = (model * gs_in[0].center).xyz;
 
     // Générer un cube à partir du centre et de la demi-taille
-    generateCube(worldCenter, gs_in[0].halfSize);
+    if (gs_in[0].isEmpty == 0)
+        generateCube(worldCenter, gs_in[0].halfSize);
 }
