@@ -75,11 +75,11 @@ int main( void )
     SceneManager *SM = new SceneManager();
 
 
-    Mesh *mesh = new Mesh("patate", "../data/meshes/frog_reg.off", glm::vec4(1.0f, 0.f, 0.f, 1.0f), shader);
+    Mesh *mesh = new Mesh("patate", "../data/meshes/holy-cow.off", glm::vec4(1.0f), shader);
     mesh->setInitalTransform(mesh->getTransform());
     SM->addObject(std::move(mesh->ptr));
 
-    RegularGrid grid = RegularGrid(mesh->getIndices(), mesh->getVertices(), 25);
+    RegularGrid grid = RegularGrid(mesh->getIndices(), mesh->getVertices(), 100);
     // grid.printGrid();
 
     // Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/bear.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);

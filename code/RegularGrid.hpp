@@ -10,6 +10,7 @@ struct VoxelData {
     glm::vec3 center;   // Centre du voxel
     float halfSize;     // Moitié de la taille du voxel
     int isEmpty;
+    glm::vec3 isEmptyOnAxe;
 
     VoxelData(const glm::vec3& c, float hs, bool ie)
         : center(c), halfSize(hs), isEmpty(ie) {}
@@ -38,8 +39,10 @@ public:
     void initializeBuffers();    // Prépare les buffers OpenGL
     VoxelData getVoxel(int x, int y, int z);
     int getColumnIndex(const VoxelData& voxel, int projectionAxis) const;
+    int getVoxelIndex(int x, int y, int z) const;
     bool intersectRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDir, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, float& t);
     void voxelizeMesh(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices);
+    void processRaycastingForAxis(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices, int projectionAxis);
     void optimizedVoxelizeMesh(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices);
     void printGrid() const;
     void draw(GLuint shaderID, glm::mat4 transformMat = glm::mat4(1.0f)); // Rendu des voxels via un shader

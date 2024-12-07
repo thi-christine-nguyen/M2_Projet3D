@@ -119,6 +119,11 @@ int RegularGrid::getColumnIndex(const VoxelData& voxel, int projectionAxis) cons
     return index1 * gridResolutionZ + index2;
 }
 
+int RegularGrid::getVoxelIndex(int x, int y, int z) const {
+    return x * gridResolutionY * gridResolutionZ + y * gridResolutionZ + z;
+}
+
+
 bool RegularGrid::intersectRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDir, 
                         const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, float& t) {
     const float EPSILON = 1e-6f;
@@ -139,9 +144,99 @@ bool RegularGrid::intersectRayTriangle(const glm::vec3& rayOrigin, const glm::ve
     return t > EPSILON; // Intersection trouvée
 }
 
+void RegularGrid::processRaycastingForAxis(const std::vector<unsigned short>& indices,
+                                           const std::vector<glm::vec3>& vertices,
+                                           int projectionAxis) {
+    // Variables pour les dimensions secondaires
+    int primaryResolution, secondaryResolution1, secondaryResolution2;
+    if (projectionAxis == 0) { // Rayon le long de X
+        primaryResolution = gridResolutionX;
+        secondaryResolution1 = gridResolutionY;
+        secondaryResolution2 = gridResolutionZ;
+    } else if (projectionAxis == 1) { // Rayon le long de Y
+        primaryResolution = gridResolutionY;
+        secondaryResolution1 = gridResolutionX;
+        secondaryResolution2 = gridResolutionZ;
+    } else if (projectionAxis == 2) { // Rayon le long de Z
+        primaryResolution = gridResolutionZ;
+        secondaryResolution1 = gridResolutionX;
+        secondaryResolution2 = gridResolutionY;
+    } else {
+        throw std::invalid_argument("Invalid projectionAxis value. Must be 0, 1, or 2.");
+    }
+    std::cout << "Resolutions onAxes : " << projectionAxis << " : primaryResolution=" << primaryResolution << ", secondaryResolution1=" << secondaryResolution1 << ", secondaryResolution2=" << secondaryResolution2 << std::endl;
+
+    // Parcourir chaque "colonne" sur les dimensions secondaires
+    for (int i = 0; i < secondaryResolution1; ++i) {
+        for (int j = 0; j < secondaryResolution2; ++j) {
+            // Origine du rayon : premier voxel dans la colonne
+            glm::vec3 rayOrigin;
+            glm::vec3 rayDir;
+
+            if (projectionAxis == 0) {
+                rayOrigin = getVoxel(0, i, j).center - glm::vec3(getVoxel(0, i, j).halfSize, 0.0f, 0.0f);
+                rayDir = glm::vec3(1.0f, 0.0f, 0.0f);
+            } else if (projectionAxis == 1) {
+                rayOrigin = getVoxel(i, 0, j).center - glm::vec3(0.0f, getVoxel(0, i, j).halfSize, 0.0f);
+                rayDir = glm::vec3(0.0f, 1.0f, 0.0f);
+            } else if (projectionAxis == 2) {
+                rayOrigin = getVoxel(i, j, 0).center - glm::vec3(0.0f, 0.0f, getVoxel(0, i, j).halfSize);
+                rayDir = glm::vec3(0.0f, 0.0f, 1.0f);
+            }
+
+            // Liste des intersections
+            std::vector<float> intersections;
+
+            // Tester chaque triangle
+            for (size_t k = 0; k < indices.size(); k += 3) {
+                unsigned short idx0 = indices[k];
+                unsigned short idx1 = indices[k + 1];
+                unsigned short idx2 = indices[k + 2];
+                const glm::vec3& v0 = vertices[idx0];
+                const glm::vec3& v1 = vertices[idx1];
+                const glm::vec3& v2 = vertices[idx2];
+
+                float t;
+                if (intersectRayTriangle(rayOrigin, rayDir, v0, v1, v2, t)) {
+                    t += (projectionAxis == 0) ? getVoxel(0, i, j).center.x\
+                       : (projectionAxis == 1) ? getVoxel(i, 0, j).center.y\
+                       : getVoxel(i, j, 0).center.z;
+                    intersections.push_back(t);
+                }
+            }
+
+            // Trier les intersections
+            std::sort(intersections.begin(), intersections.end());
+
+            // Marquer les voxels entre les intersections
+            bool isInside = false;
+            for (int p = 0; p < primaryResolution; ++p) {
+                VoxelData voxel = (projectionAxis == 0) ? getVoxel(p, i, j)\
+                                : (projectionAxis == 1) ? getVoxel(i, p, j)\
+                                : (projectionAxis == 2) ? getVoxel(i, j, p)\
+                                : getVoxel(0, 0, 0);
+
+                float voxelStart = voxel.center[projectionAxis] - voxel.halfSize;
+                float voxelEnd = voxel.center[projectionAxis] + voxel.halfSize;
+
+                for (size_t k = 0; k < intersections.size(); ++k) {
+                    if (intersections[k] >= voxelStart && intersections[k] <= voxelEnd) {
+                        isInside = !isInside;
+                    }
+                }
+
+                int voxelIndex = (projectionAxis == 0) ? getVoxelIndex(p, i, j)\
+                                : (projectionAxis == 1) ? getVoxelIndex(i, p, j)\
+                                : getVoxelIndex(i, j, p);
+                voxels[voxelIndex].isEmptyOnAxe[projectionAxis] = isInside ? 0 : 1;
+            }
+        }
+    }
+}
+
 void RegularGrid::optimizedVoxelizeMesh(const std::vector<unsigned short>& indices, 
                                         const std::vector<glm::vec3>& vertices) {
-    if (indices.size() % 3 != 0) {
+   if (indices.size() % 3 != 0) {
         std::cerr << "Error: The index data is not valid. Must be a multiple of 3 (triangles)." << std::endl;
         return;
     }
@@ -150,61 +245,21 @@ void RegularGrid::optimizedVoxelizeMesh(const std::vector<unsigned short>& indic
         return;
     }
 
-    // Parcourir chaque colonne de voxels (par exemple, dans le plan YZ)
-    for (int y = 0; y < gridResolutionY; ++y) {
-        for (int z = 0; z < gridResolutionZ; ++z) {
-            // Origine du rayon : le premier voxel dans la colonne
-            VoxelData voxel = getVoxel(0, y, z);
-            glm::vec3 rayOrigin = voxel.center - glm::vec3(voxel.halfSize, 0.0f, 0.0f);
-            glm::vec3 rayDir(1.0f, 0.0f, 0.0f); // Rayon parallèle à l'axe X
-
-            // Liste des distances d'intersection
-            std::vector<float> intersections;
-
-            // Tester chaque triangle du maillage
-            for (size_t i = 0; i < indices.size(); i += 3) {
-                unsigned short idx0 = indices[i];
-                unsigned short idx1 = indices[i + 1];
-                unsigned short idx2 = indices[i + 2];
-                const glm::vec3& v0 = vertices[idx0];
-                const glm::vec3& v1 = vertices[idx1];
-                const glm::vec3& v2 = vertices[idx2];
-
-                float t; // Distance d'intersection le long du rayon
-                if (intersectRayTriangle(rayOrigin, rayDir, v0, v1, v2, t)) {
-                    intersections.push_back(getVoxel(0, y, z).center.x + t);
-                }
-            }
-
-            // Trier les intersections le long de l'axe X
-            std::sort(intersections.begin(), intersections.end());
-            // for (float inter : intersections)
-                // std::cout << "Intersection at " << inter << std::endl;
-
-            // Marquer les voxels entre les intersections
-            bool isInside = false;
-            for (int x = 0; x < gridResolutionX; ++x) {
-                VoxelData voxel = getVoxel(x, y, z);
-                float voxelStartX = voxel.center.x - voxel.halfSize;
-                float voxelEndX = voxel.center.x + voxel.halfSize;
-                // std::cout << "voxel(" << x << "; " << y << "; " << z << ") : " << "start = " << voxelStartX << " end = " << voxelEndX << std::endl;
-
-                // Vérifier si le voxel est "entre" deux intersections
-                for (size_t i = 0; i < intersections.size(); ++i) {
-                    if (intersections[i] >= voxelStartX && intersections[i] <= voxelEndX) {
-                        isInside = !isInside; // Alterner entre intérieur/extérieur
-                        // std::cout << "Switch from " << (isInside ? "out " : "in ") << "to " << (isInside ? "in " : "out ") << "at position (" << x << "; " << y << "; " << z << ")" << std::endl;
-                    }
-                }
-                // voxel.isEmpty = isInside ? 0 : 1;
-                // Marquer le voxel comme plein ou vide
-                int voxelIndex = x * gridResolutionY * gridResolutionZ + y * gridResolutionZ + z;
-                voxels[voxelIndex].isEmpty = isInside ? 0 : 1;
-                // std::cout << voxel.isEmpty << std::endl;
-            }
-        }
+    // Marquer tous les voxels comme vides
+    for (VoxelData& voxel : voxels) {
+        voxel.isEmpty = 1;
+        voxel.isEmptyOnAxe = glm::vec3(1, 1, 1);
     }
 
+    // Lancer des rayons sur chaque axe
+    processRaycastingForAxis(indices, vertices, 0); // Axe X
+    processRaycastingForAxis(indices, vertices, 1); // Axe Y
+    processRaycastingForAxis(indices, vertices, 2); // Axe Z
+    for (VoxelData &voxel : voxels) {
+        voxel.isEmpty = voxel.isEmptyOnAxe.x == 1 || voxel.isEmptyOnAxe.y == 1 || voxel.isEmptyOnAxe.z == 1;
+        // if (voxel.isEmpty)
+        //     std::cout << voxel.isEmpty << ": " << voxel.isEmptyOnAxe.x << "; " << voxel.isEmptyOnAxe.y << "; " << voxel.isEmptyOnAxe.z << std::endl;
+    }
     std::cout << "Optimized voxelization complete: " << voxels.size() << " voxels processed." << std::endl;
 }
 
@@ -273,7 +328,7 @@ void RegularGrid::printGrid() const {
 }
 
 void RegularGrid::draw(GLuint shaderID, glm::mat4 transformMat) {
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // std::cout << shaderID << std::endl;
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &transformMat[0][0]); // Matrice de transformation
