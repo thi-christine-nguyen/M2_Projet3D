@@ -7,7 +7,7 @@ Mesh::Mesh(std::string name, const char *path, int textureID, const char *textur
     strncpy(newName, name.c_str(), sizeof(newName) - 1); 
     this->textureID = textureID;
     this->texturePath = texturePath;
-    this->shader = shader; 
+    this->shader = shader;
     
     indices.clear();
     vertices.clear();
@@ -294,5 +294,10 @@ void Mesh::updateInterfaceTransform(float _deltaTime){
     }
     ImGui::Separator();
     GameObject::updateInterfaceTransform(_deltaTime);
-    
+
 }
+
+// void Mesh::draw(Shader &shader)
+// {
+//     GameObject::draw(shader);
+// }

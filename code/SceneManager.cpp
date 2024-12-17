@@ -18,7 +18,19 @@ void SceneManager::update(float deltaTime) {
 void SceneManager::draw(Shader &shader) {
     for (const auto& object : objects) {
         // Afficher l'objet
-        object->draw(shader);
+        if(object->getShowMesh()) {
+            object->draw(shader);
+        }
+
+    }
+}
+
+void SceneManager::drawVoxel(Shader &shader) {
+    for (const auto& object : objects) {
+        
+        if(object->getShowVoxel()) {
+            object->drawVoxel(shader);
+        }
     }
 }
 

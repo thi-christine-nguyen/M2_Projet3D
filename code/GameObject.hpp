@@ -23,6 +23,7 @@
 #include "Material.h"
 #include "Shader.hpp"
 #include "texture.hpp"
+#include "RegularGrid.hpp"
 
 class GameObject {
 protected:
@@ -68,6 +69,14 @@ protected:
     // INTERFACE
     bool scaleLocked_ = false; 
     bool isWireframe = false;
+    bool isWireframeVoxel = false; 
+    bool showMesh = true; 
+    bool showVoxel = false; 
+
+    RegularGrid grid; 
+    int voxelResolution = 0; 
+    bool gridInitialized = false;
+
 
 public:
     std::unique_ptr<GameObject> ptr;
@@ -114,14 +123,20 @@ public:
     void DeleteBuffers();
 
     void draw(Shader &shader);
+    void drawVoxel(Shader &shader);
 
     /* ------------------------- TEXTURES -------------------------*/
-
     void initTexture();
 
     /* ------------------------- INTERFACE -------------------------*/
     void resetParameters();
     void updateInterfaceTransform(float _deltaTime);
+
+    bool getIsWireframe();
+    bool getIsWireframeVoxel(); 
+    bool getShowMesh(); 
+    bool getShowVoxel(); 
+
 
     /* ------------------------- DESTRUCTOR -------------------------*/
     virtual ~GameObject() = default;

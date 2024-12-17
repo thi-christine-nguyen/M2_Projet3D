@@ -117,7 +117,6 @@ void GameObject::DeleteBuffers()
 
 void GameObject::draw(Shader &shader)
 {
-   
     // Si Wireframe, passe en mode GL_LINE
     if (isWireframe) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -158,8 +157,6 @@ void GameObject::draw(Shader &shader)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIndices);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
 
-   
-
     // Désactiver les layouts et delink VAO
     glBindVertexArray(0);
     glDisableVertexAttribArray(0);
@@ -182,9 +179,7 @@ void GameObject::initTexture() {
         loadTexture2DFromFilePath(texturePath); 
         glUniform1i(glGetUniformLocation(shader.ID, "gameObjectTexture"), 0);
     }
-    
 }
-
 
 /* ------------------------- INTERFACE -------------------------*/
 
@@ -218,15 +213,56 @@ void GameObject::updateInterfaceTransform(float _deltaTime) {
         ImGui::DragFloat3((std::string("##") + std::to_string(id) + "Scale").c_str(), glm::value_ptr(scale), 0.1f, 0.0f, FLT_MAX);
     }
 
-    ImGui::Checkbox(("Afficher en Wireframe ##" + std::to_string(id)).c_str(), &isWireframe);
-
-
     transform.setPosition(position);
     transform.setRotation(rotation);
     transform.setScale(scale);
-    
+
 
     if (ImGui::Button(("Reset " + std::to_string(id) + " Parameters").c_str())) {
         resetParameters();
     }
+
+    ImGui::Separator();
+    ImGui::Text("Resolution de voxelisation");
+    // int res = voxelResolution;
+    ImGui::SliderInt(("##" + std::to_string(id) + "VoxelResolution").c_str(), &voxelResolution, 1, 512);
+
+    // Nouveau bouton pour voxeliser
+    if (ImGui::Button(("Voxeliser ##" + std::to_string(id)).c_str())) {
+        // voxelResolution = res; 
+        if (voxelResolution > 0) {
+            grid = RegularGrid(indices, vertices, voxelResolution); 
+            showVoxel = true ; 
+        }
+    }
+    
+    ImGui::Checkbox(("Afficher le Mesh ##" + std::to_string(id)).c_str(), &showMesh);
+    ImGui::Checkbox(("Afficher le Mesh Wireframe ##" + std::to_string(id)).c_str(), &isWireframe);
+
+    ImGui::Checkbox(("Afficher en Voxel ##" + std::to_string(id)).c_str(), &showVoxel);
+    ImGui::Checkbox(("Afficher Voxel en Wireframe ##" + std::to_string(id)).c_str(), &isWireframeVoxel);
+
+}
+
+void GameObject::drawVoxel(Shader &shader) {
+    if (isWireframeVoxel) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }else{
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    grid.draw(shader.ID);
+}
+
+bool GameObject::getIsWireframe(){
+    return isWireframe; 
+}
+bool GameObject::getIsWireframeVoxel(){
+    return isWireframeVoxel; 
+}
+bool GameObject::getShowMesh(){
+    return showMesh; 
+}
+bool GameObject::getShowVoxel(){
+    return showVoxel; 
 }

@@ -247,7 +247,7 @@ void Interface::updateInterface(float _deltaTime, GLFWwindow* _window)
 
     if (ImGui::Begin("Interface")){
         if (ImGui::BeginTabBar("Tabs")) {
-            camera->updateInterfaceCamera(_deltaTime); 
+        //     camera->updateInterfaceCamera(_deltaTime); 
         }
         if (ImGui::BeginTabItem("Objects")) {
             for (auto& object : SM->getObjects()) {
@@ -298,13 +298,13 @@ void Interface::update(float _deltaTime, GLFWwindow* _window){
     bool isMenuFocused = ImGui::IsAnyItemHovered() || ImGui::IsWindowHovered(ImGuiFocusedFlags_AnyWindow | ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) ;
 
     // Si le menu est en focus et l'état n'est pas sauvegardé, on sauvegarde l'état
-    if (isMenuFocused && !camera->m_stateSaved) {
+    if (isMenuFocused && !camera->getSavedState()) {
         camera->saveState();          // Sauvegarde de l'état actuel
         camera->setInputMode(InputMode::Fixed); // Passage en mode fixe pour l'interface
     }
     
     // Si le menu perd le focus et que l'état a été sauvegardé, on restaure l'état
-    else if (!isMenuFocused && camera->m_stateSaved) {
+    else if (!isMenuFocused && camera->getSavedState()) {
         camera->restoreState();       // Restauration de l'état initial
     }
 }

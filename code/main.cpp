@@ -5,9 +5,9 @@
 #include "Shader.hpp"
 #include "Mesh.hpp"
 #include "Camera.hpp"
-#include "Camera_Helper.hpp"
 #include "Interface.hpp"
 #include "SceneManager.hpp"
+#include "RegularGrid.hpp"
 
 // /*******************************************************************************/
 int main( void )
@@ -30,8 +30,15 @@ int main( void )
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
-    int window_width = static_cast<int>(mode->width * 0.5);
+    // int window_width = static_cast<int>(mode->width * 0.8);
+    // int window_height = static_cast<int>(mode->height * 1.0);
+
+    
     int window_height = static_cast<int>(mode->height * 0.8);
+    int window_width = static_cast<int>(mode->width * 0.5);
+
+    
+    float aspectRatio = static_cast<float>(window_width) / static_cast<float>(window_height);
 
     // Open a window and create its OpenGL context
     char title[50] = "Projet 3D - Voxelisation";
@@ -67,23 +74,30 @@ int main( void )
     // glEnable(GL_CULL_FACE);
 
     // Create and compile our GLSL program from the shaders
-    Shader shader = Shader("vertex_shader.glsl", "fragment_shader.glsl" );
-    SceneManager *SM = new SceneManager(shader);
+    Shader shader = Shader("vertex_shader.glsl", "fragment_shader.glsl");
+    Shader voxelShader = Shader("voxel_vertex_shader.glsl", "voxel_fragment_shader.glsl", "voxel_geometry_shader.glsl" );
+    // Shader voxelShader = Shader("voxel_vertex_shader.glsl", "voxel_fragment_shader.glsl");
+    SceneManager *SM = new SceneManager();
 
-    Mesh *mesh = new Mesh("patate", "../data/meshes/suzanne.off", glm::vec4(1.0f, 0.f, 0.f, 1.0f), shader);
+
+    Mesh *mesh = new Mesh("patate", "../data/meshes/sphere.off", glm::vec4(1.0f), shader);
     mesh->setInitalTransform(mesh->getTransform());
     SM->addObject(std::move(mesh->ptr));
 
-    Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/bear.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);
-    mesh2->setInitalTransform(mesh2->getTransform());
-    SM->addObject(std::move(mesh2->ptr));
+   
+    // RegularGrid grid = RegularGrid(mesh->getIndices(), mesh->getVertices(), 10);
+    // grid.printGrid();
+
+    // Mesh *mesh2 = new Mesh("mesh2", "../data/meshes/holy-cow.off", glm::vec4(0.0f, 1.f, 0.f, 1.0f), shader);
+    // mesh2->setInitalTransform(mesh2->getTransform());
+    // SM->addObject(std::move(mesh2->ptr));
     
     SM->initGameObjectsTexture();
     Interface interface(shader, SM, &camera); 
 
     shader.use(); 
 
-    glm::vec3 lightPos = glm::vec3(0.0f, 5.0f, 0.0f); // Une position fixe pour la lumière
+    glm::vec3 lightPos = glm::vec3(0.0f, 10.0f, 0.0f); // Une position fixe pour la lumière
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);  // Couleur de la lumière (blanc)
 
     GLuint lightPosID = glGetUniformLocation(shader.ID, "lightPos");
@@ -102,7 +116,6 @@ int main( void )
     interface.initImgui(window); 
 
     do{
-     
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -124,14 +137,22 @@ int main( void )
         glEnable(GL_DEPTH_TEST);
         // Use our shader
         shader.use(); 
+
         interface.createFrame(); 
         interface.update(deltaTime, window); 
 
         camera.update(deltaTime, window); 
-        camera.sendToShader(shader.ID); 
+        camera.sendToShader(shader.ID, aspectRatio);
+
         SM->update(deltaTime);
         SM->draw(shader);
-        interface.renderFrame();  
+
+
+        voxelShader.use();
+        camera.sendToShader(voxelShader.ID, aspectRatio);
+        SM->drawVoxel(voxelShader); 
+
+        interface.renderFrame();
 
         // Swap buffers
         glfwSwapBuffers(window);
@@ -160,4 +181,5 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
+
 
