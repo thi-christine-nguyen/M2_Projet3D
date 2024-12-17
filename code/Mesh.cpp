@@ -18,7 +18,7 @@ Mesh::Mesh(std::string name, const char *path, int textureID, const char *textur
     meshPath = path; 
     newtexturePath = texturePath; 
 
-    // this->GenerateBuffers();
+    this->GenerateBuffers();
 }
 
 Mesh::Mesh(std::string name, const char *path, glm::vec4 color, Shader &shader)
@@ -297,7 +297,7 @@ void Mesh::updateInterfaceTransform(float _deltaTime){
 
 }
 
-void Mesh::draw(Shader &shader)
-{
-    GameObject::draw(shader);
-}
+// void Mesh::draw(Shader &shader)
+// {
+//     GameObject::draw(shader);
+// }
