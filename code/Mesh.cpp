@@ -294,7 +294,7 @@ void Mesh::updateInterfaceTransform(float _deltaTime){
     }
     ImGui::Separator();
     GameObject::updateInterfaceTransform(_deltaTime);
-    
+
 }
 
 void Mesh::draw(Shader &shader)

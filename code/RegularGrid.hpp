@@ -48,7 +48,7 @@ public:
     void draw(GLuint shaderID, glm::mat4 transformMat = glm::mat4(1.0f)); // Rendu des voxels via un shader
     void init(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices);
 
-    ~RegularGrid();
+    virtual ~RegularGrid() = default;
 };
 
 #endif

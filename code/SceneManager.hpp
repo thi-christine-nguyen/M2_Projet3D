@@ -5,6 +5,7 @@
 #include <memory> // Pour std::unique_ptr
 #include "lib.hpp"
 #include "GameObject.hpp"
+#include "Mesh.hpp"
 
 class SceneManager {
 private:
@@ -21,6 +22,7 @@ public:
 
     // Méthode pour afficher tous les objets de la scène
     void draw(Shader &shader);
+    void drawVoxel(Shader &shader);
 
     void initGameObjectsTexture();
     GameObject *getObjectByName(const std::string& name);
