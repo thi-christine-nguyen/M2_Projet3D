@@ -23,6 +23,7 @@ void RegularGrid::init(const std::vector<unsigned short>& indices, const std::ve
 
     minBounds = minVertex;
     maxBounds = maxVertex;
+
     // Régénérer les sommets et indices
     generateVoxels();
     // voxelizeMesh(indices, vertices);
@@ -59,26 +60,35 @@ void RegularGrid::generateVoxels() {
     std::cout << "Generated " << voxels.size() << " voxels.\n";
 }
 
-
 void RegularGrid::initializeBuffers() {
-    // if (VAO != 0 && VBO != 0) return; // Éviter une double initialisation
-    
+    // if (VAO != 0) return; // Éviter une double initialisation
+
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    
+
     glBindVertexArray(VAO);
+
+    // Préparer les données des voxels
+    std::vector<VoxelData> bufferData;
+    for (const auto& voxel : voxels) {
+        bufferData.emplace_back(voxel.center, voxel.halfSize, voxel.isEmpty);
+        // std::cout << voxel.isEmpty << std::endl;
+        // std::cout << "center={" << bufferData.back().center.x << ", " << bufferData.back().center.y << ", " << bufferData.back().center.z << "} halfSize=" << bufferData.back().halfSize << std::endl;
+    }
+    // std::cout << bufferData.size() << std::endl;
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, voxels.size() * sizeof(VoxelData), voxels.data(), GL_STATIC_DRAW);
-    
+    glBufferData(GL_ARRAY_BUFFER, bufferData.size() * sizeof(VoxelData), bufferData.data(), GL_STATIC_DRAW);
+
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelData), (void*)offsetof(VoxelData, center));
-    
+
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelData), (void*)offsetof(VoxelData, halfSize));
-    
+
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 1, GL_INT, GL_FALSE, sizeof(VoxelData), (void*)offsetof(VoxelData, isEmpty));
-    
+
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
@@ -317,13 +327,12 @@ void RegularGrid::printGrid() const {
     }
 }
 
-
-
 void RegularGrid::draw(GLuint shaderID, glm::mat4 transformMat) {
-    glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &transformMat[0][0]); 
-    glUniform3f(glGetUniformLocation(shaderID, "objectColor"), 1.0, 1.0, 1.0); // Gris
-
+    // std::cout << shaderID << std::endl;
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &transformMat[0][0]); // Matrice de transformation
+    glUniform3f(glGetUniformLocation(shaderID, "objectColor"), 1.0, 1.0, 1.0); 
     glBindVertexArray(VAO);
     glDrawArrays(GL_POINTS, 0, voxels.size());
+
     glBindVertexArray(0);
 }

@@ -122,17 +122,16 @@ void Camera::scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
     m_scrollOffset = yOffset; // Update scroll offset
 }
 
-void Camera::setupEditorLight(Camera& camera, GLuint shaderID) {
+void Camera::setupEditorLight(GLuint shaderID) {
     // Obtenir la position et la direction de la caméra
-    glm::vec3 lightPos = m_position;  // Position de la caméra
-    glm::vec3 lightDir = glm::rotate(m_orientation, glm::vec3(0.0f, 0.0f, -1.0f)); // Direction avant
+    glm::vec3 lightPos = m_position;
+    // std::cout << m_position.x << " " << m_position.y << " " << m_position.z << std::endl; 
 
     // Définir les paramètres d'éclairage
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Lumière blanche
 
     // Envoyer les uniformes au shader
     glUniform3fv(glGetUniformLocation(shaderID, "lightPos"), 1, &lightPos[0]);
-    glUniform3fv(glGetUniformLocation(shaderID, "lightDir"), 1, &lightDir[0]); // Si nécessaire pour un spot
     glUniform3fv(glGetUniformLocation(shaderID, "lightColor"), 1, &lightColor[0]);
 }
 
