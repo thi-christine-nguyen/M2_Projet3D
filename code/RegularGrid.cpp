@@ -59,6 +59,7 @@ void RegularGrid::generateVoxels() {
     std::cout << "Generated " << voxels.size() << " voxels.\n";
 }
 
+
 void RegularGrid::initializeBuffers() {
     // if (VAO != 0 && VBO != 0) return; // Éviter une double initialisation
     
@@ -316,8 +317,12 @@ void RegularGrid::printGrid() const {
     }
 }
 
+
+
 void RegularGrid::draw(GLuint shaderID, glm::mat4 transformMat) {
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &transformMat[0][0]); 
+    glUniform3f(glGetUniformLocation(shaderID, "objectColor"), 1.0, 1.0, 1.0); // Gris
+
     glBindVertexArray(VAO);
     glDrawArrays(GL_POINTS, 0, voxels.size());
     glBindVertexArray(0);

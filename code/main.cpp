@@ -94,17 +94,19 @@ int main( void )
     
     SM->initGameObjectsTexture();
     Interface interface(shader, SM, &camera); 
-
-    shader.use(); 
-
+    
     glm::vec3 lightPos = glm::vec3(0.0f, 10.0f, 0.0f); // Une position fixe pour la lumière
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);  // Couleur de la lumière (blanc)
 
-    GLuint lightPosID = glGetUniformLocation(shader.ID, "lightPos");
-    GLuint lightColorID = glGetUniformLocation(shader.ID, "lightColor");
+    
+    voxelShader.use(); 
+    glUniform3fv(glGetUniformLocation(voxelShader.ID, "lightPos"), 1, &lightPos[0]);
+    glUniform3fv(glGetUniformLocation(voxelShader.ID, "lightColor"), 1, &lightColor[0]);
 
-    glUniform3fv(lightPosID, 1, &lightPos[0]);
-    glUniform3fv(lightColorID, 1, &lightColor[0]);
+    shader.use(); 
+    glUniform3fv(glGetUniformLocation(shader.ID, "lightPos"), 1, &lightPos[0]);
+    glUniform3fv( glGetUniformLocation(shader.ID, "lightColor"), 1, &lightColor[0]);
+
 
     //----------------------------------------- Init -----------------------------------------//
    // Timing

@@ -4,6 +4,8 @@ layout(location = 0) in vec3 inCenter;  // Le centre du voxel dans l'espace mod�
 layout(location = 1) in float inHalfSize;  // La halfSize du voxel
 layout(location = 2) in int inIsEmpty;  // Est-ce que le voxel est plein ou pas
 
+uniform mat4 model;
+
 out VS_OUT {
     vec4 center;      // Centre transformé dans l'espace monde
     float halfSize;   // Taille du voxel, inchangée
@@ -17,5 +19,5 @@ void main() {
     vs_out.isEmpty = inIsEmpty;
 
     // Calculer la position finale dans l'espace écran pour OpenGL
-    // gl_Position = projection * view * worldCenter;
+    // gl_Position = projection * view * vec4(FragPos, 1.0);
 }
