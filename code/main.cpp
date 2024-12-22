@@ -94,19 +94,6 @@ int main( void )
     
     SM->initGameObjectsTexture();
     Interface interface(shader, SM, &camera); 
-    
-    glm::vec3 lightPos = glm::vec3(0.0f, 10.0f, 0.0f); // Une position fixe pour la lumière
-    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);  // Couleur de la lumière (blanc)
-
-    
-    voxelShader.use(); 
-    glUniform3fv(glGetUniformLocation(voxelShader.ID, "lightPos"), 1, &lightPos[0]);
-    glUniform3fv(glGetUniformLocation(voxelShader.ID, "lightColor"), 1, &lightColor[0]);
-
-    shader.use(); 
-    glUniform3fv(glGetUniformLocation(shader.ID, "lightPos"), 1, &lightPos[0]);
-    glUniform3fv( glGetUniformLocation(shader.ID, "lightColor"), 1, &lightColor[0]);
-
 
     //----------------------------------------- Init -----------------------------------------//
    // Timing
@@ -143,6 +130,7 @@ int main( void )
         interface.createFrame(); 
         interface.update(deltaTime, window); 
 
+        camera.setupEditorLight(camera, shader.ID);
         camera.update(deltaTime, window); 
         camera.sendToShader(shader.ID, aspectRatio);
 
@@ -151,6 +139,7 @@ int main( void )
 
 
         voxelShader.use();
+        camera.setupEditorLight(camera, voxelShader.ID);
         camera.sendToShader(voxelShader.ID, aspectRatio);
         SM->drawVoxel(voxelShader); 
 

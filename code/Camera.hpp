@@ -56,6 +56,7 @@ public:
 
     void update(float deltaTime, GLFWwindow* window);
     void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
+    void setupEditorLight(Camera& camera, GLuint shaderID);
     void sendToShader(GLuint programID, float aspectRatio) const;
 
     glm::mat4 getViewMatrix() const;
