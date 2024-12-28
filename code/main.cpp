@@ -30,12 +30,12 @@ int main( void )
     const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     // Créer une fenêtre adaptative (par exemple 80% de la taille de l'écran)
-    // int window_width = static_cast<int>(mode->width * 0.8);
-    // int window_height = static_cast<int>(mode->height * 1.0);
+    int window_width = static_cast<int>(mode->width * 0.8);
+    int window_height = static_cast<int>(mode->height * 1.0);
 
     
-    int window_height = static_cast<int>(mode->height * 0.8);
-    int window_width = static_cast<int>(mode->width * 0.5);
+    // int window_height = static_cast<int>(mode->height * 0.8);
+    // int window_width = static_cast<int>(mode->width * 0.5);
 
     
     float aspectRatio = static_cast<float>(window_width) / static_cast<float>(window_height);
