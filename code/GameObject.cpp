@@ -251,7 +251,7 @@ void GameObject::drawVoxel(Shader &shader) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    grid.draw(shader.ID);
+    grid.draw(shader.ID, transform.getMatrix());
 }
 
 bool GameObject::getIsWireframe(){

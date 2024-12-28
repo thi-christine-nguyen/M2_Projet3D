@@ -13,6 +13,7 @@ in VS_OUT {
 // Sorties pour le Fragment Shader
 out vec3 fNormal;          // Normale pour chaque face
 out vec3 fWorldPosition;   // Position dans l'espace monde (pour debug ou shading)
+out vec3 n; 
 
 // Uniformes pour les matrices
 uniform mat4 model;         // Matrice modèle

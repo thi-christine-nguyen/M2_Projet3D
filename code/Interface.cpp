@@ -26,6 +26,7 @@ void Interface::createFrame() {
 
     // Fin de la fenêtre
     ImGui::End();
+    
 }
 
 
