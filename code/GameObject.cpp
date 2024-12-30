@@ -227,11 +227,20 @@ void GameObject::updateInterfaceTransform(float _deltaTime) {
     // int res = voxelResolution;
     ImGui::SliderInt(("##" + std::to_string(id) + "VoxelResolution").c_str(), &voxelResolution, 1, 512);
 
+    // Liste des méthodes de voxélisation
+    static int selectedMethod = 0; // Indice de la méthode sélectionnée
+    const char* voxelMethods[] = { "Optimized", "Simple", "Surface" }; // Noms des méthodes
+
+    ImGui::Text("Méthodes de voxélisation");
+    ImGui::Combo(("##" + std::to_string(id) + "VoxelMethod").c_str(), &selectedMethod, voxelMethods, IM_ARRAYSIZE(voxelMethods));
+
     // Nouveau bouton pour voxeliser
     if (ImGui::Button(("Voxeliser ##" + std::to_string(id)).c_str())) {
         // voxelResolution = res; 
         if (voxelResolution > 0) {
-            grid = RegularGrid(indices, vertices, voxelResolution); 
+            VoxelizationMethod method = (selectedMethod == 0) ? VoxelizationMethod::Optimized : \
+            (selectedMethod == 1) ? VoxelizationMethod::Simple : VoxelizationMethod::Surface;
+            grid = RegularGrid(indices, vertices, voxelResolution, method); 
             showVoxel = true ; 
         }
     }

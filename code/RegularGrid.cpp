@@ -1,16 +1,16 @@
 #include "RegularGrid.hpp"
 #include <iostream>
 
-RegularGrid::RegularGrid(const glm::vec3& minBounds, const glm::vec3& maxBounds, int resolution = 10)
+RegularGrid::RegularGrid(const glm::vec3& minBounds, const glm::vec3& maxBounds, int resolution = 10, VoxelizationMethod method = VoxelizationMethod::Optimized)
     : minBounds(minBounds), maxBounds(maxBounds), resolution(resolution), VAO(0), VBO(0) {}
 
-RegularGrid::RegularGrid(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices, int resolution = 10)
+RegularGrid::RegularGrid(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices, int resolution = 10, VoxelizationMethod method = VoxelizationMethod::Optimized)
 {
     this->resolution = resolution;
-    init(indices, vertices);
+    init(indices, vertices, method);
 }
 
-void RegularGrid::init(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices) {
+void RegularGrid::init(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices, VoxelizationMethod method) {
     if (vertices.empty()) return;
 
     glm::vec3 minVertex = vertices[0];
@@ -26,8 +26,22 @@ void RegularGrid::init(const std::vector<unsigned short>& indices, const std::ve
 
     // Régénérer les sommets et indices
     generateVoxels();
-    // voxelizeMesh(indices, vertices);
-    optimizedVoxelizeMesh(indices, vertices);
+
+    // Initialiser selon la méthode choisie
+    switch (method) {
+        case VoxelizationMethod::Simple:
+            std::cout << "Using Simple voxelization.\n";
+            voxelizeMesh(indices, vertices);
+            break;
+        case VoxelizationMethod::Optimized:
+            std::cout << "Using Optimized voxelization on axes.\n";
+            optimizedVoxelizeMesh(indices, vertices);
+            break;
+        case VoxelizationMethod::Surface:
+            std::cout << "Using surface voxelization.\n";
+            voxelizeMeshSurface(indices, vertices);
+            break;
+    }
     initializeBuffers();
 }
 
@@ -234,33 +248,59 @@ void RegularGrid::processRaycastingForAxis(const std::vector<unsigned short>& in
     }
 }
 
-void RegularGrid::optimizedVoxelizeMesh(const std::vector<unsigned short>& indices, 
-                                        const std::vector<glm::vec3>& vertices) {
-   if (indices.size() % 3 != 0) {
-        std::cerr << "Error: The index data is not valid. Must be a multiple of 3 (triangles)." << std::endl;
-        return;
-    }
-    if (indices.empty() || vertices.empty()) {
-        std::cerr << "Error: Mesh data is empty. Ensure you have valid indices and vertices." << std::endl;
-        return;
+bool RegularGrid::triangleIntersectsAABB(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
+                                         const glm::vec3& boxCenter, const glm::vec3& boxHalfSize) const {
+    // Étape 1 : Translation des points du triangle vers le centre de l'AABB
+    glm::vec3 t0 = v0 - boxCenter;
+    glm::vec3 t1 = v1 - boxCenter;
+    glm::vec3 t2 = v2 - boxCenter;
+
+    // Étape 2 : Axes de la boîte
+    const glm::vec3 boxAxes[3] = { glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1) };
+
+    // Étape 3 : Test sur les axes de la boîte
+    for (int i = 0; i < 3; ++i) {
+        float r = boxHalfSize[i];
+        float p0 = t0[i], p1 = t1[i], p2 = t2[i];
+        float minP = glm::min(p0, glm::min(p1, p2));
+        float maxP = glm::max(p0, glm::max(p1, p2));
+        if (minP > r || maxP < -r) return false; // Pas d'intersection
     }
 
-    // Marquer tous les voxels comme vides
-    for (VoxelData& voxel : voxels) {
-        voxel.isEmpty = 1;
-        voxel.isEmptyOnAxe = glm::vec3(1, 1, 1);
+    // Étape 4 : Normale du triangle
+    glm::vec3 triangleNormal = glm::cross(t1 - t0, t2 - t0);
+    if (!testAxis(triangleNormal, t0, t1, t2, boxHalfSize)) return false;
+
+    // Étape 5 : Axes croisés entre les arêtes du triangle et les axes de la boîte
+    const glm::vec3 triangleEdges[3] = { t1 - t0, t2 - t1, t0 - t2 };
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            glm::vec3 axis = glm::cross(triangleEdges[i], boxAxes[j]);
+            if (!testAxis(axis, t0, t1, t2, boxHalfSize)) return false;
+        }
     }
 
-    // Lancer des rayons sur chaque axe
-    processRaycastingForAxis(indices, vertices, 0); // Axe X
-    processRaycastingForAxis(indices, vertices, 1); // Axe Y
-    processRaycastingForAxis(indices, vertices, 2); // Axe Z
-    for (VoxelData &voxel : voxels) {
-        voxel.isEmpty = voxel.isEmptyOnAxe.x == 1 || voxel.isEmptyOnAxe.y == 1 || voxel.isEmptyOnAxe.z == 1;
-        // if (voxel.isEmpty)
-        //     std::cout << voxel.isEmpty << ": " << voxel.isEmptyOnAxe.x << "; " << voxel.isEmptyOnAxe.y << "; " << voxel.isEmptyOnAxe.z << std::endl;
-    }
-    std::cout << "Optimized voxelization complete: " << voxels.size() << " voxels processed." << std::endl;
+    return true; // Pas d'axe de séparation trouvé, intersection existante
+}
+
+// Méthode utilitaire pour tester un axe de séparation
+bool RegularGrid::testAxis(const glm::vec3& axis, const glm::vec3& t0, const glm::vec3& t1, const glm::vec3& t2,
+                           const glm::vec3& boxHalfSize) const {
+    if (glm::dot(axis, axis) < 1e-6f) return true; // Vérification de la quasi-nullité de l'axe
+
+    // Projeter le triangle sur l'axe
+    float p0 = glm::dot(t0, axis);
+    float p1 = glm::dot(t1, axis);
+    float p2 = glm::dot(t2, axis);
+    float triMin = glm::min(p0, glm::min(p1, p2));
+    float triMax = glm::max(p0, glm::max(p1, p2));
+
+    // Projeter l'AABB sur l'axe
+    glm::vec3 absAxis = glm::abs(axis);
+    float boxRadius = glm::dot(boxHalfSize, absAxis);
+
+    // Tester la séparation
+    return !(triMin > boxRadius || triMax < -boxRadius);
 }
 
 void RegularGrid::voxelizeMesh(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices) {
@@ -298,6 +338,88 @@ void RegularGrid::voxelizeMesh(const std::vector<unsigned short>& indices, const
         voxel.isEmpty = (intersectionCount % 2 == 0) ? 1 : 0; // Pair -> à l'extérieur
     }
     std::cout << "Voxelization complete: " << voxels.size() << " voxels processed." << std::endl;
+}
+
+// Méthode de voxelisation de la surface du maillage
+void RegularGrid::voxelizeMeshSurface(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices) {
+    if (indices.size() % 3 != 0) {
+        std::cerr << "Error: The index data is not valid. Must be a multiple of 3 (triangles)." << std::endl;
+        return;
+    }
+    if (indices.empty() || vertices.empty()) {
+        std::cerr << "Error: Mesh data is empty. Ensure you have valid indices and vertices." << std::endl;
+        return;
+    }
+
+    // Réinitialiser tous les voxels à vide
+    for (VoxelData& voxel : voxels) {
+        voxel.isEmpty = 1;
+    }
+
+    // Parcourir les triangles
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        unsigned short idx0 = indices[i];
+        unsigned short idx1 = indices[i + 1];
+        unsigned short idx2 = indices[i + 2];
+        const glm::vec3& v0 = vertices[idx0];
+        const glm::vec3& v1 = vertices[idx1];
+        const glm::vec3& v2 = vertices[idx2];
+
+        // Déterminer les voxels impactés
+        glm::vec3 triMin = glm::min(glm::min(v0, v1), v2);
+        glm::vec3 triMax = glm::max(glm::max(v0, v1), v2);
+        glm::ivec3 startIdx = glm::floor((triMin - minBounds) / (2 * voxels[0].halfSize));
+        glm::ivec3 endIdx = glm::ceil((triMax - minBounds) / (2 * voxels[0].halfSize));
+
+        // Parcourir les voxels dans cette boîte englobante
+        for (int x = startIdx.x; x <= endIdx.x; ++x) {
+            for (int y = startIdx.y; y <= endIdx.y; ++y) {
+                for (int z = startIdx.z; z <= endIdx.z; ++z) {
+                    int voxelIndex = getVoxelIndex(x, y, z);
+                    if (voxelIndex < 0 || voxelIndex >= voxels.size()) continue;
+
+                    VoxelData& voxel = voxels[voxelIndex];
+                    glm::vec3 boxCenter = voxel.center;
+                    glm::vec3 boxHalfSize(voxel.halfSize);
+
+                    if (triangleIntersectsAABB(v0, v1, v2, boxCenter, boxHalfSize)) {
+                        voxel.isEmpty = 0; // Marquer le voxel comme "touché"
+                    }
+                }
+            }
+        }
+    }
+
+    std::cout << "Surface voxelization complete: " << voxels.size() << " voxels processed." << std::endl;
+}
+
+void RegularGrid::optimizedVoxelizeMesh(const std::vector<unsigned short>& indices, 
+                                        const std::vector<glm::vec3>& vertices) {
+   if (indices.size() % 3 != 0) {
+        std::cerr << "Error: The index data is not valid. Must be a multiple of 3 (triangles)." << std::endl;
+        return;
+    }
+    if (indices.empty() || vertices.empty()) {
+        std::cerr << "Error: Mesh data is empty. Ensure you have valid indices and vertices." << std::endl;
+        return;
+    }
+
+    // Marquer tous les voxels comme vides
+    for (VoxelData& voxel : voxels) {
+        voxel.isEmpty = 1;
+        voxel.isEmptyOnAxe = glm::vec3(1, 1, 1);
+    }
+
+    // Lancer des rayons sur chaque axe
+    processRaycastingForAxis(indices, vertices, 0); // Axe X
+    processRaycastingForAxis(indices, vertices, 1); // Axe Y
+    processRaycastingForAxis(indices, vertices, 2); // Axe Z
+    for (VoxelData &voxel : voxels) {
+        voxel.isEmpty = voxel.isEmptyOnAxe.x == 1 || voxel.isEmptyOnAxe.y == 1 || voxel.isEmptyOnAxe.z == 1;
+        // if (voxel.isEmpty)
+        //     std::cout << voxel.isEmpty << ": " << voxel.isEmptyOnAxe.x << "; " << voxel.isEmptyOnAxe.y << "; " << voxel.isEmptyOnAxe.z << std::endl;
+    }
+    std::cout << "Optimized voxelization complete: " << voxels.size() << " voxels processed." << std::endl;
 }
 
 void RegularGrid::printGrid() const {
