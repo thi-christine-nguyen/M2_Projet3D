@@ -1,40 +1,16 @@
 #ifndef REGULAR_GRID_HPP__
 #define REGULAR_GRID_HPP__
 
-#include <vector>
-#include <glm/glm.hpp>
-#include <GL/glew.h>
-#include <algorithm>
+#include "Grid.hpp"
 
-enum class VoxelizationMethod {
-    Simple,      // Voxelisation complète (avec intérieur)
-    Optimized,      // Voxelisation complète (avec intérieur) optimisé sur les axes
-    Surface    // Voxelisation de la surface uniquement
-};
-
-struct VoxelData {
-    glm::vec3 center;   // Centre du voxel
-    float halfSize;     // Moitié de la taille du voxel
-    int isEmpty;
-    glm::vec3 isEmptyOnAxe;
-
-    VoxelData(const glm::vec3& c, float hs, bool ie)
-        : center(c), halfSize(hs), isEmpty(ie) {}
-};
-
-class RegularGrid {
+class RegularGrid : public Grid {
 private:
-    glm::vec3 minBounds; // Coordonnées minimales
-    glm::vec3 maxBounds; // Coordonnées maximales
-
-    int resolution;      // Résolution de la grille
     int gridResolutionX;
     int gridResolutionY;
     int gridResolutionZ;
 
     std::vector<VoxelData> voxels; // Liste des voxels
     GLuint VAO, VBO;           // Buffers OpenGL pour les voxels
-
 
 public:
     RegularGrid() {};
