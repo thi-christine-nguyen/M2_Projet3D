@@ -240,7 +240,7 @@ void GameObject::updateInterfaceTransform(float _deltaTime) {
         if (voxelResolution > 0) {
             VoxelizationMethod method = (selectedMethod == 0) ? VoxelizationMethod::Optimized : \
             (selectedMethod == 1) ? VoxelizationMethod::Simple : VoxelizationMethod::Surface;
-            grid = RegularGrid(indices, vertices, voxelResolution, method); 
+            grid = AdaptativeGrid(indices, vertices, voxelResolution, method); 
             showVoxel = true ; 
         }
     }

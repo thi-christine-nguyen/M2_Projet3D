@@ -76,6 +76,8 @@ add_executable(main
 		code/SceneManager.cpp
 		code/RegularGrid.hpp
 		code/RegularGrid.cpp
+		code/AdaptativeGrid.hpp
+		code/AdaptativeGrid.cpp
 
         code/vertex_shader.glsl
         code/fragment_shader.glsl

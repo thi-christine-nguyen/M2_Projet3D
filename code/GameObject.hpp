@@ -24,6 +24,7 @@
 #include "Shader.hpp"
 #include "texture.hpp"
 #include "RegularGrid.hpp"
+#include "AdaptativeGrid.hpp"
 
 class GameObject {
 protected:
@@ -73,7 +74,7 @@ protected:
     bool showMesh = true; 
     bool showVoxel = false; 
 
-    RegularGrid grid; 
+    AdaptativeGrid grid;
     int voxelResolution = 0; 
     bool gridInitialized = false;
 

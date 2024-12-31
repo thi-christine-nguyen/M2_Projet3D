@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 #include <algorithm>
+#include <iostream>
 
 enum class VoxelizationMethod {
     Simple,      // Voxelisation complète (avec intérieur)
@@ -37,6 +38,8 @@ public:
 
     void printGrid() const;
     void draw(GLuint shaderID, glm::mat4 transformMat = glm::mat4(1.0f)); // Rendu des voxels via un shader
+    bool triangleIntersectsAABB(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
+                                         const glm::vec3& boxCenter, const glm::vec3& boxHalfSize) const;
     virtual ~Grid() = default;
 };
 
