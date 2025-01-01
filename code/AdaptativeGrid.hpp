@@ -104,23 +104,15 @@ struct OctreeNode {
 
 class AdaptativeGrid : public Grid {
 private:
-    GLuint VAO, VBO;           // Buffers OpenGL pour les voxels
     std::shared_ptr<OctreeNode> root;
-    std::vector<VoxelData> voxels; // Vecteur de voxels
+    
 
 public:
     AdaptativeGrid() {};
     AdaptativeGrid(const glm::vec3& minBounds, const glm::vec3& maxBounds, int resolution, VoxelizationMethod method);
     AdaptativeGrid(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices, int resolution, VoxelizationMethod method);
 
-    void initializeBuffers();    // Prépare les buffers OpenGL
-    bool triangleIntersectsAABB(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
-                                         const glm::vec3& boxCenter, const glm::vec3& boxHalfSize) const;
-    bool testAxis(const glm::vec3& axis, const glm::vec3& t0, const glm::vec3& t1, const glm::vec3& t2,
-                           const glm::vec3& boxHalfSize) const;
-
     void printGrid() const;
-    void draw(GLuint shaderID, glm::mat4 transformMat = glm::mat4(1.0f)); // Rendu des voxels via un shader
 
     void voxelizeMesh(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices);
     void voxelizeNode(OctreeNode& node, const std::vector<unsigned short>& indices,

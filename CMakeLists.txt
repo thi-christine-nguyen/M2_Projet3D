@@ -72,6 +72,8 @@ add_executable(main
 		code/Camera_Helper.hpp
 		code/Interface.cpp
 		code/Interface.hpp
+		code/Grid.hpp
+		code/Grid.cpp
 		code/SceneManager.hpp
 		code/SceneManager.cpp
 		code/RegularGrid.hpp

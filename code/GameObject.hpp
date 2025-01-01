@@ -26,6 +26,11 @@
 #include "RegularGrid.hpp"
 #include "AdaptativeGrid.hpp"
 
+enum class GridType {
+    Regular,
+    Adaptative
+};
+
 class GameObject {
 protected:
     // GENERAL
@@ -74,8 +79,11 @@ protected:
     bool showMesh = true; 
     bool showVoxel = false; 
 
-    AdaptativeGrid grid;
-    int voxelResolution = 0; 
+    // AdaptativeGrid grid;
+    std::unique_ptr<Grid> grid;
+    GridType gridType = GridType::Regular;
+    
+    int voxelResolution = 2; 
     bool gridInitialized = false;
 
 
