@@ -245,7 +245,7 @@ void GameObject::updateInterfaceTransform(float _deltaTime) {
         ImGui::Combo(("##" + std::to_string(id) + "VoxelMethod").c_str(), &selectedMethod, voxelMethods, IM_ARRAYSIZE(voxelMethods));
 
     }
-   
+
     // Bouton pour voxeliser
     if (ImGui::Button(("Voxeliser ##" + std::to_string(id)).c_str())) {
         if (voxelResolution > 0) {
@@ -262,13 +262,40 @@ void GameObject::updateInterfaceTransform(float _deltaTime) {
             gridInitialized = true; 
         }
     }
-    
+
+    if (gridInitialized){
+        
+        ImGui::Text("Color RGB (0-256)");
+        static float colorWheel[3] = {1.0f, 1.0f, 1.0f};  // Valeurs normalisées de 0 à 1
+        static bool colorPopupOpen = false;
+
+        // Bouton pour ouvrir la roue de couleurs
+        if (ImGui::Button(("Choose a color ## voxel" + std::to_string(id)).c_str())) {
+            ImGui::OpenPopup(("ColorPickerPopup ## voxel" + std::to_string(id)).c_str());
+        }
+
+        // Pop-up de sélection de couleur
+        if (ImGui::BeginPopup(("ColorPickerPopup ## voxel" + std::to_string(id)).c_str())) {
+            ImGui::Text("Choose a color");
+            ImGui::Separator();
+
+            // Affiche la roue de couleur
+            ImGui::ColorPicker3(("Color ## voxel" + std::to_string(id)).c_str(), colorWheel);
+
+            ImGui::Separator();
+            if (ImGui::Button(("OK ## voxel" + std::to_string(id)).c_str(), ImVec2(120, 0))) {
+                glm::vec3 selectedColor(colorWheel[0], colorWheel[1], colorWheel[2]);
+                grid->setColor(selectedColor);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+    }
     ImGui::Checkbox(("Afficher le Mesh ##" + std::to_string(id)).c_str(), &showMesh);
     ImGui::Checkbox(("Afficher le Mesh Wireframe ##" + std::to_string(id)).c_str(), &isWireframe);
 
     ImGui::Checkbox(("Afficher en Voxel ##" + std::to_string(id)).c_str(), &showVoxel);
     ImGui::Checkbox(("Afficher Voxel en Wireframe ##" + std::to_string(id)).c_str(), &isWireframeVoxel);
-
 }
 
 void GameObject::drawVoxel(Shader &shader) {

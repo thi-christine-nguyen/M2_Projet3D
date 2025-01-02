@@ -362,4 +362,3 @@ void RegularGrid::printGrid() const {
         std::cout << std::endl; // Séparer les couches de voxels
     }
 }
-

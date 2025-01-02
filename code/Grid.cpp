@@ -91,9 +91,14 @@ bool Grid::testAxis(const glm::vec3& axis, const glm::vec3& t0, const glm::vec3&
 void Grid::draw(GLuint shaderID, glm::mat4 transformMat) {
     // std::cout << shaderID << std::endl;
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &transformMat[0][0]); // Matrice de transformation
-    glUniform3f(glGetUniformLocation(shaderID, "objectColor"), 1.0, 1.0, 1.0); 
+    glUniform3fv(glGetUniformLocation(shaderID, "objectColor"), 1, &color[0]); // Couleur
     glBindVertexArray(VAO);
     glDrawArrays(GL_POINTS, 0, voxels.size());
-
     glBindVertexArray(0);
 }
+
+void Grid::setColor(glm::vec3 c){
+    color = c; 
+}
+
+

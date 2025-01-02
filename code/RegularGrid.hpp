@@ -9,7 +9,8 @@ private:
     int gridResolutionY;
     int gridResolutionZ;
 
-   
+    std::vector<glm::vec3> vertices;
+    std::vector<unsigned int> indices;
 
 public:
     RegularGrid() {};
@@ -30,6 +31,7 @@ public:
     void voxelizeMesh(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices);
     void voxelizeMeshSurface(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices);
     void optimizedVoxelizeMesh(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices);
+
 
     virtual ~RegularGrid() = default;
 };

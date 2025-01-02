@@ -6,6 +6,7 @@
 #include <GL/glew.h>
 #include <algorithm>
 #include <iostream>
+#include <unordered_map>
 
 enum class VoxelizationMethod {
     Simple,      // Voxelisation complète (avec intérieur)
@@ -33,6 +34,7 @@ protected:
 
     std::vector<VoxelData> voxels; // Liste des voxels
     GLuint VAO, VBO;           // Buffers OpenGL pour les voxels
+    glm::vec3 color {1.f, 1.f, 1.f};
 
 public:
     Grid() {};
@@ -47,7 +49,8 @@ public:
                                          const glm::vec3& boxCenter, const glm::vec3& boxHalfSize) const;
     bool testAxis(const glm::vec3& axis, const glm::vec3& t0, const glm::vec3& t1, const glm::vec3& t2,
                            const glm::vec3& boxHalfSize) const;
-   
+    void setColor(glm::vec3 c);
+
     virtual ~Grid() = default;
 };
 
