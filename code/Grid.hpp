@@ -8,7 +8,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <fstream>
-#include "MarchingCubeTable.hpp"
+#include "MarchingCubesTable.hpp"
 
 enum class VoxelizationMethod {
     Simple,      // Voxelisation complète (avec intérieur)
@@ -21,7 +21,7 @@ struct VoxelData {
     float halfSize;     // Moitié de la taille du voxel
     int isEmpty;
     glm::vec3 isEmptyOnAxe;
-    std::array<int, 8> edge;
+    int edge[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
     VoxelData(const glm::vec3& c, float hs, bool ie)
         : center(c), halfSize(hs), isEmpty(ie) {}

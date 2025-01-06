@@ -32,6 +32,35 @@ public:
     void voxelizeMeshSurface(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices);
     void optimizedVoxelizeMesh(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices);
     void marchingCube() override;
+    bool areVec3Equal(const glm::vec3& v1, const glm::vec3& v2, float epsilon = 1e-6f) {
+        return glm::all(glm::lessThan(glm::abs(v1 - v2), glm::vec3(epsilon)));
+    }
+    bool isCornerActive(const glm::vec3& corner, const std::vector<glm::vec3>& activeCorner, float epsilon = 1e-6f) {
+        for (const auto& active : activeCorner) {
+            if (areVec3Equal(corner, active, epsilon)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool isVoxelOnBorder(const VoxelData &voxel) {
+        glm::vec3 voxelPos = voxel.center;
+        glm::vec3 gridMin = glm::vec3(0.0f); // Position minimale de la grille
+        glm::vec3 gridMax = glm::vec3(gridResolutionX, gridResolutionY, gridResolutionZ); // Position maximale de la grille
+        
+        // Vérifier si le voxel est sur un bord (face ou coin)
+        if (voxelPos.x <= gridMin.x || voxelPos.x >= gridMax.x ||
+            voxelPos.y <= gridMin.y || voxelPos.y >= gridMax.y ||
+            voxelPos.z <= gridMin.z || voxelPos.z >= gridMax.z) {
+            return true;
+        }
+        return false;
+    }
+
+
+
+
 
     virtual ~RegularGrid() = default;
 };
