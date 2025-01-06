@@ -112,5 +112,3 @@ void AdaptativeGrid::printGrid() const {
                 << ", Is Empty: " << voxel.isEmpty << std::endl;
     }
 }
-
-

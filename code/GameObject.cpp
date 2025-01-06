@@ -146,6 +146,9 @@ void GameObject::draw(Shader &shader)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
     glEnableVertexAttribArray(0);
 
+    glPointSize(10.0f);
+    glDrawArrays(GL_POINTS, 0, vertices.size());
+
     glBindBuffer(GL_ARRAY_BUFFER, vboUV);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
     glEnableVertexAttribArray(1);
@@ -258,6 +261,8 @@ void GameObject::updateInterfaceTransform(float _deltaTime) {
             } else {
                 grid = std::make_unique<AdaptativeGrid>(indices, vertices, voxelResolution, method);
             }
+
+            grid->marchingCube(); 
             showVoxel = true;
             gridInitialized = true; 
         }

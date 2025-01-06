@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
+#include <fstream>
+#include "MarchingCubeTable.hpp"
 
 enum class VoxelizationMethod {
     Simple,      // Voxelisation complète (avec intérieur)
@@ -19,6 +21,7 @@ struct VoxelData {
     float halfSize;     // Moitié de la taille du voxel
     int isEmpty;
     glm::vec3 isEmptyOnAxe;
+    std::array<int, 8> edge;
 
     VoxelData(const glm::vec3& c, float hs, bool ie)
         : center(c), halfSize(hs), isEmpty(ie) {}
@@ -50,6 +53,11 @@ public:
     bool testAxis(const glm::vec3& axis, const glm::vec3& t0, const glm::vec3& t1, const glm::vec3& t2,
                            const glm::vec3& boxHalfSize) const;
     void setColor(glm::vec3 c);
+
+    virtual void marchingCube() {
+        std::cerr << "Marching Cubes not implemented." << std::endl;
+    }
+
 
     virtual ~Grid() = default;
 };

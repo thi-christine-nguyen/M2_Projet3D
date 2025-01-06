@@ -362,3 +362,120 @@ void RegularGrid::printGrid() const {
         std::cout << std::endl; // Séparer les couches de voxels
     }
 }
+
+
+void RegularGrid::marchingCube() {
+    std::vector<unsigned short> indices;
+    std::vector<glm::vec3> vertices;
+    glm::vec3 corner[8]; 
+    std::vector<glm::vec3> activeCorner; 
+    for (VoxelData &voxel : voxels) {
+        if(!voxel.isEmpty){
+
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, -voxel.halfSize)); 
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, -voxel.halfSize)); 
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, voxel.halfSize)); 
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, voxel.halfSize)); 
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, -voxel.halfSize)); 
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, -voxel.halfSize)); 
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, voxel.halfSize)); 
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, voxel.halfSize)); 
+            
+            voxel.edge[0] = 1;  
+            voxel.edge[1] = 1;  
+            voxel.edge[2] = 1;  
+            voxel.edge[3] = 1;  
+            voxel.edge[4] = 1;  
+            voxel.edge[5] = 1;  
+            voxel.edge[6] = 1;              
+            voxel.edge[7] = 1;  
+        }
+    }
+
+    for (VoxelData &voxel : voxels) {
+        if(voxel.isEmpty){
+            corner[0] = voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, -voxel.halfSize); 
+            corner[1] = voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, -voxel.halfSize); 
+            corner[2] = voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, voxel.halfSize); 
+            corner[3] = voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, voxel.halfSize); 
+            corner[4] = voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, -voxel.halfSize); 
+            corner[5] = voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, -voxel.halfSize); 
+            corner[6] = voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, voxel.halfSize); 
+            corner[7] = voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, voxel.halfSize); 
+
+            for(int i = 0; i < 8; i++){
+                if (std::find(activeCorner.begin(), activeCorner.end(), corner[i]) != activeCorner.end()) {
+                    voxel.edge[i] = 1;
+                } else {
+                    voxel.edge[i] = 0;
+                }
+            }
+        }
+    }
+
+    // for (VoxelData &voxel : voxels) {
+    //     int cubeIndex = 0;
+    //     for (int i = 0; i < 8; i++) {
+    //         if (voxel.edge[i] == 1) {
+    //             cubeIndex |= (1 << i);  // On met à 1 le bit correspondant à ce bord
+    //         }else{
+    //             cubeIndex |= (0 << i);
+    //         }
+    //     }
+
+    //     // // Si aucune intersection (cubeIndex == 0), continuer
+    //     // if (cubeIndex == 0) continue;
+
+    //     // Utiliser la table de triangulation pour obtenir les indices des triangles
+    //     const int *triangulationData = MarchingCubeTable::triangulation[cubeIndex];
+
+    //     for (int i = 0; triangulationData[i] != -1; i += 3) {
+    //         glm::vec3 vertexA = corner[MarchingCubeTable::cornerIndexAFromEdge[triangulationData[i]]];
+    //         glm::vec3 vertexB = corner[MarchingCubeTable::cornerIndexBFromEdge[triangulationData[i + 1]]];
+    //         glm::vec3 vertexC = corner[MarchingCubeTable::cornerIndexAFromEdge[triangulationData[i + 2]]];
+
+    //         // Calculer la position des vertices (intersection des bords)
+    //         // Exemple basique : intersection lineaire sur chaque bord, à ajuster selon ton critère
+    //         glm::vec3 intersectionAB = (vertexA + vertexB) / 2.0f; 
+    //         glm::vec3 intersectionBC = (vertexB + vertexC) / 2.0f;
+    //         glm::vec3 intersectionCA = (vertexC + vertexA) / 2.0f;
+
+    //         // Ajouter ces vertices à la liste
+    //         vertices.push_back(intersectionAB);
+    //         vertices.push_back(intersectionBC);
+    //         vertices.push_back(intersectionCA);
+
+    //         // Ajouter les indices pour former un triangle
+    //         indices.push_back(vertices.size() - 3);
+    //         indices.push_back(vertices.size() - 2);
+    //         indices.push_back(vertices.size() - 1);
+    //     }
+    // }
+    
+
+    std::ofstream outFile("../data/meshes/output.off");
+    if (!outFile) {
+        std::cerr << "Erreur : impossible d'ouvrir le fichier pour écrire les données OFF." << std::endl;
+        return;
+    }
+
+    // Écriture de l'en-tête OFF
+    outFile << "OFF\n";
+    outFile << vertices.size() << " " << (indices.size() / 3) << " 0\n"; // Nb de sommets, faces, arêtes
+
+    // Écriture des sommets
+    for (const auto &vertex : vertices) {
+        outFile << vertex.x << " " << vertex.y << " " << vertex.z << "\n";
+    }
+
+    // Écriture des faces
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        outFile << "3 " << indices[i] << " " << indices[i + 1] << " " << indices[i + 2] << "\n";
+    }
+
+    outFile.close();
+    std::cout << "Fichier OFF généré avec succès : output.off" << std::endl;
+
+
+}
+
