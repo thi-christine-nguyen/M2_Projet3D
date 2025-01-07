@@ -5,7 +5,7 @@ void Grid::initializeBuffers() {
     // if (VAO != 0) return; // Éviter une double initialisation
 
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &VBO);using Voxel = std::tuple<int, int, int>;
 
     glBindVertexArray(VAO);
 

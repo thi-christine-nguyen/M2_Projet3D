@@ -368,9 +368,63 @@ void RegularGrid::marchingCube() {
     std::vector<unsigned short> indices;
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> activeCorner; 
-    for (VoxelData &voxel : voxels) {
-        if(!voxel.isEmpty){
 
+    std::vector<VoxelData> marchingGrid = voxels; // Liste des voxels
+
+    glm::vec3 minCenter = voxels[0].center;
+    glm::vec3 maxCenter = voxels[0].center;
+
+    // Parcours des voxels
+    for (const auto& voxel : voxels) {
+        minCenter.x = std::min(minCenter.x, voxel.center.x);
+        minCenter.y = std::min(minCenter.y, voxel.center.y);
+        minCenter.z = std::min(minCenter.z, voxel.center.z);
+
+        maxCenter.x = std::max(maxCenter.x, voxel.center.x);
+        maxCenter.y = std::max(maxCenter.y, voxel.center.y);
+        maxCenter.z = std::max(maxCenter.z, voxel.center.z);
+    }
+
+    for (const auto& voxel : voxels) {
+        glm::vec3 newCenter = voxel.center;
+
+        if (voxel.center.x == minCenter.x) {
+            newCenter.x -= (2 * voxel.halfSize); 
+            marchingGrid.emplace_back(newCenter, voxel.halfSize, 1);
+        }
+
+        if (voxel.center.x == maxCenter.x) {
+            newCenter.x += (2 * voxel.halfSize); 
+            marchingGrid.emplace_back(newCenter, voxel.halfSize, 1);
+        }
+
+        if (voxel.center.y == minCenter.y) {
+            newCenter.y -= (2 * voxel.halfSize); 
+
+            marchingGrid.emplace_back(newCenter, voxel.halfSize, 1);
+        }
+
+        if (voxel.center.y == maxCenter.y) {
+            newCenter.y += (2 * voxel.halfSize); 
+            marchingGrid.emplace_back(newCenter, voxel.halfSize, 1);
+        }
+
+        if (voxel.center.z == minCenter.z) {
+            newCenter.z -= (2 * voxel.halfSize); 
+            marchingGrid.emplace_back(newCenter, voxel.halfSize, 1);
+        }
+
+        if (voxel.center.z == maxCenter.z) {
+            newCenter.z += (2 * voxel.halfSize); 
+            marchingGrid.emplace_back(newCenter, voxel.halfSize, 1);
+        }
+       
+
+    }
+
+
+    for (VoxelData &voxel : marchingGrid) {
+        if(!voxel.isEmpty){
             activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, -voxel.halfSize)); 
             activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, -voxel.halfSize)); 
             activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, voxel.halfSize)); 
@@ -383,7 +437,7 @@ void RegularGrid::marchingCube() {
         }
     }
 
-    for (VoxelData &voxel : voxels) {
+    for (VoxelData &voxel : marchingGrid) {
         
        
         glm::vec3 corner[8]; 
@@ -395,10 +449,7 @@ void RegularGrid::marchingCube() {
         corner[5] = voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, -voxel.halfSize); 
         corner[6] = voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, voxel.halfSize); 
         corner[7] = voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, voxel.halfSize); 
-
         
-        
-
         for (int i = 0; i < 8; i++) {
             if (isCornerActive(corner[i], activeCorner)) {
                 voxel.edge[i] = 1;
@@ -409,7 +460,7 @@ void RegularGrid::marchingCube() {
     }
 
 
-    for (VoxelData &voxel : voxels) {
+    for (VoxelData &voxel : marchingGrid) {
         int cubeIndex = 0;
         
         for (int i = 0; i < 8; i++) {
@@ -456,6 +507,7 @@ void RegularGrid::marchingCube() {
         }
         
     }
+
     
 
     std::ofstream outFile("../data/meshes/output.off");
