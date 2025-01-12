@@ -129,7 +129,6 @@ glm::vec3 RegularGrid::getVoxelVec3Index(const VoxelData&voxel) const {
         voxelIndex.z < 0 || voxelIndex.z >= gridResolutionZ) {
         throw std::out_of_range("Position hors des limites de la grille !");
     }
-
     return voxelIndex;
 }
 
@@ -139,7 +138,7 @@ void RegularGrid::update(float deltaTime, GLFWwindow* window) {
             keyYUpPressed = true;
             glm::vec3 voxelVec3Idx = getVoxelVec3Index(*selectedVoxel);
             selectedVoxel->isSelected = 0;
-            std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
+            // std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
             
             selectedVoxel = &voxels[getVoxelIndex(voxelVec3Idx.x, std::min(((int)voxelVec3Idx.y + 1), (gridResolutionY - 1)), voxelVec3Idx.z)];
             selectedVoxel->isSelected = 1;
@@ -152,7 +151,7 @@ void RegularGrid::update(float deltaTime, GLFWwindow* window) {
             keyYDownPressed = true;
             glm::vec3 voxelVec3Idx = getVoxelVec3Index(*selectedVoxel);
             selectedVoxel->isSelected = 0;
-            std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
+            // std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
             
             selectedVoxel = &voxels[getVoxelIndex(voxelVec3Idx.x, std::max(((int)voxelVec3Idx.y - 1), 0), voxelVec3Idx.z)];
             selectedVoxel->isSelected = 1;
@@ -165,7 +164,7 @@ void RegularGrid::update(float deltaTime, GLFWwindow* window) {
             keyXUpPressed = true;
             glm::vec3 voxelVec3Idx = getVoxelVec3Index(*selectedVoxel);
             selectedVoxel->isSelected = 0;
-            std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
+            // std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
             
             selectedVoxel = &voxels[getVoxelIndex(std::min(((int)voxelVec3Idx.x + 1), (gridResolutionX - 1)), voxelVec3Idx.y, voxelVec3Idx.z)];
             selectedVoxel->isSelected = 1;
@@ -178,7 +177,7 @@ void RegularGrid::update(float deltaTime, GLFWwindow* window) {
             keyXDownPressed = true;
             glm::vec3 voxelVec3Idx = getVoxelVec3Index(*selectedVoxel);
             selectedVoxel->isSelected = 0;
-            std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
+            // std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
             
             selectedVoxel = &voxels[getVoxelIndex(std::max((int)voxelVec3Idx.x - 1, 0), voxelVec3Idx.y, voxelVec3Idx.z)];
             selectedVoxel->isSelected = 1;
@@ -191,7 +190,7 @@ void RegularGrid::update(float deltaTime, GLFWwindow* window) {
             keyZUpPressed = true;
             glm::vec3 voxelVec3Idx = getVoxelVec3Index(*selectedVoxel);
             selectedVoxel->isSelected = 0;
-            std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
+            // std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
             
             selectedVoxel = &voxels[getVoxelIndex(voxelVec3Idx.x, voxelVec3Idx.y, std::min(((int)voxelVec3Idx.z + 1), (gridResolutionZ - 1)))];
             selectedVoxel->isSelected = 1;
@@ -204,7 +203,7 @@ void RegularGrid::update(float deltaTime, GLFWwindow* window) {
             keyZDownPressed = true;
             glm::vec3 voxelVec3Idx = getVoxelVec3Index(*selectedVoxel);
             selectedVoxel->isSelected = 0;
-            std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
+            // std::cout << "Old selected: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
             
             selectedVoxel = &voxels[getVoxelIndex(voxelVec3Idx.x, voxelVec3Idx.y, std::max((int)voxelVec3Idx.z - 1, 0))];
             selectedVoxel->isSelected = 1;
@@ -217,6 +216,15 @@ void RegularGrid::update(float deltaTime, GLFWwindow* window) {
             keyAddPressed = true;
             glm::vec3 voxelVec3Idx = getVoxelVec3Index(*selectedVoxel);
             selectedVoxel->isEmpty = 0;
+            activeCorner.push_back(selectedVoxel->center + glm::vec3(-selectedVoxel->halfSize, -selectedVoxel->halfSize, -selectedVoxel->halfSize));
+            activeCorner.push_back(selectedVoxel->center + glm::vec3(selectedVoxel->halfSize, -selectedVoxel->halfSize, -selectedVoxel->halfSize));
+            activeCorner.push_back(selectedVoxel->center + glm::vec3(selectedVoxel->halfSize, -selectedVoxel->halfSize, selectedVoxel->halfSize));
+            activeCorner.push_back(selectedVoxel->center + glm::vec3(-selectedVoxel->halfSize, -selectedVoxel->halfSize, selectedVoxel->halfSize));
+            activeCorner.push_back(selectedVoxel->center + glm::vec3(-selectedVoxel->halfSize, selectedVoxel->halfSize, -selectedVoxel->halfSize));
+            activeCorner.push_back(selectedVoxel->center + glm::vec3(selectedVoxel->halfSize, selectedVoxel->halfSize, -selectedVoxel->halfSize));
+            activeCorner.push_back(selectedVoxel->center + glm::vec3(selectedVoxel->halfSize, selectedVoxel->halfSize, selectedVoxel->halfSize));
+            activeCorner.push_back(selectedVoxel->center + glm::vec3(-selectedVoxel->halfSize, selectedVoxel->halfSize, selectedVoxel->halfSize)); 
+ 
             std::cout << "Adding voxel at: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
        }
     } else
@@ -226,16 +234,20 @@ void RegularGrid::update(float deltaTime, GLFWwindow* window) {
             keyDeletePressed = true;
             glm::vec3 voxelVec3Idx = getVoxelVec3Index(*selectedVoxel);
             selectedVoxel->isEmpty = 1;
+                        activeCorner.push_back(selectedVoxel->center + glm::vec3(-selectedVoxel->halfSize, -selectedVoxel->halfSize, -selectedVoxel->halfSize));
+            activeCorner.erase(std::find(activeCorner.begin(), activeCorner.end(), selectedVoxel->center + glm::vec3(selectedVoxel->halfSize, -selectedVoxel->halfSize, -selectedVoxel->halfSize)));
+            activeCorner.erase(std::find(activeCorner.begin(), activeCorner.end(), selectedVoxel->center + glm::vec3(selectedVoxel->halfSize, -selectedVoxel->halfSize, selectedVoxel->halfSize)));
+            activeCorner.erase(std::find(activeCorner.begin(), activeCorner.end(), selectedVoxel->center + glm::vec3(-selectedVoxel->halfSize, -selectedVoxel->halfSize, selectedVoxel->halfSize)));
+            activeCorner.erase(std::find(activeCorner.begin(), activeCorner.end(), selectedVoxel->center + glm::vec3(-selectedVoxel->halfSize, selectedVoxel->halfSize, -selectedVoxel->halfSize)));
+            activeCorner.erase(std::find(activeCorner.begin(), activeCorner.end(), selectedVoxel->center + glm::vec3(selectedVoxel->halfSize, selectedVoxel->halfSize, -selectedVoxel->halfSize)));
+            activeCorner.erase(std::find(activeCorner.begin(), activeCorner.end(), selectedVoxel->center + glm::vec3(selectedVoxel->halfSize, selectedVoxel->halfSize, selectedVoxel->halfSize)));
+            activeCorner.erase(std::find(activeCorner.begin(), activeCorner.end(), selectedVoxel->center + glm::vec3(-selectedVoxel->halfSize, selectedVoxel->halfSize, selectedVoxel->halfSize))); 
+ 
             std::cout << "Delete voxel at: " << voxelVec3Idx.x << "; " << voxelVec3Idx.y << "; " << voxelVec3Idx.z << std::endl; // Forward
        }
     } else
         keyDeletePressed = false;
     initializeBuffers();
-    // if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) m_position -= forward * m_movementSpeed * deltaTime; // Backward
-    // if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) m_position -= right * m_movementSpeed * deltaTime;   // Left
-    // if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) m_position += right * m_movementSpeed * deltaTime;   // Right
-    // if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) m_position += up * m_movementSpeed * deltaTime;  // Up
-    // if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) m_position -= up * m_movementSpeed * deltaTime; // Down
 }
 
 bool RegularGrid::intersectRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDir, 
