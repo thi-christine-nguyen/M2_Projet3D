@@ -390,7 +390,7 @@ void Interface::updateInterface(float _deltaTime, GLFWwindow* _window)
                     ImGui::Text("Object Name: %s", objectName.c_str());
                     meshObject->updateInterfaceTransform(_deltaTime); 
                     voxelInterface(meshObject); 
-                    marchingCubeInterface(meshObject); 
+                    if(meshObject->isGridInitialized()){marchingCubeInterface(meshObject);}
                 }
             }
             if (ImGui::CollapsingHeader("Add")) {

@@ -44,20 +44,6 @@ void AdaptativeGrid::fillVoxelDataRecursive(const OctreeNode& node) {
         //     << size.y << ", " 
         //     << size.z << ")" << std::endl;
         voxels.emplace_back(VoxelData{center, size.x, 0}); // 0 si le nœud est rempli
-        // Ajouter les coins du voxel au tableau activeCorner
-        glm::vec3 corners[8] = {
-            center + glm::vec3(-size.x, -size.y, -size.z),
-            center + glm::vec3(size.x, -size.y, -size.z),
-            center + glm::vec3(size.x, -size.y, size.z),
-            center + glm::vec3(-size.x, -size.y, size.z),
-            center + glm::vec3(-size.x, size.y, -size.z),
-            center + glm::vec3(size.x, size.y, -size.z),
-            center + glm::vec3(size.x, size.y, size.z),
-            center + glm::vec3(-size.x, size.y, size.z)
-        };
-        for (const glm::vec3& corner : corners) {
-            activeCorner.push_back(corner);
-        }
 
     } else {
         // Parcourez les enfants si ce n'est pas une feuille
