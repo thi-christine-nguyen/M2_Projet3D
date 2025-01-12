@@ -46,25 +46,29 @@ void RegularGrid::init(const std::vector<unsigned short>& indices, const std::ve
 }
 
 void RegularGrid::generateVoxels() {
-     // Dimensions de la grille
+    // Dimensions de la grille
     glm::vec3 gridSize = maxBounds - minBounds;
 
     // Calculer la taille réelle d'un voxel cubique
     float voxelSize = std::min({gridSize.x / resolution, gridSize.y / resolution, gridSize.z / resolution});
 
-    // Calculer les nouvelles résolutions pour couvrir complètement la grille
-    gridResolutionX = std::ceil(gridSize.x / voxelSize);
-    gridResolutionY = std::ceil(gridSize.y / voxelSize);
-    gridResolutionZ = std::ceil(gridSize.z / voxelSize);
+    // Calculer les résolutions de la grille, en ajoutant des voxels au bord
+    gridResolutionX = std::ceil(gridSize.x / voxelSize);  // +2 pour ajouter des voxels au bord
+    gridResolutionY = std::ceil(gridSize.y / voxelSize);  // +2 pour ajouter des voxels au bord
+    gridResolutionZ = std::ceil(gridSize.z / voxelSize);  // +2 pour ajouter des voxels au bord
+    
     float halfSize = voxelSize / 2;
+    
     std::cout << "Voxel size (cubique): " << voxelSize << ", halfSize: " << halfSize << std::endl;
     std::cout << "Resolutions adjusted: X=" << gridResolutionX << ", Y=" << gridResolutionY << ", Z=" << gridResolutionZ << std::endl;
 
     voxels.clear();
 
+    // Créer les voxels en tenant compte des nouveaux bords
     for (int x = 0; x < gridResolutionX; ++x) {
         for (int y = 0; y < gridResolutionY; ++y) {
             for (int z = 0; z < gridResolutionZ; ++z) {
+                // Décaler les positions des voxels pour englober tous les voxels
                 glm::vec3 center = minBounds + glm::vec3(x, y, z) * voxelSize + glm::vec3(halfSize);
                 voxels.emplace_back(center, halfSize, 1);
             }
@@ -73,6 +77,9 @@ void RegularGrid::generateVoxels() {
 
     std::cout << "Generated " << voxels.size() << " voxels.\n";
 }
+
+
+
 
 VoxelData RegularGrid::getVoxel(int x, int y, int z) {
     // Calculer l'index unique dans la liste des voxels
@@ -218,6 +225,7 @@ void RegularGrid::processRaycastingForAxis(const std::vector<unsigned short>& in
 }
 
 void RegularGrid::voxelizeMesh(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices) {
+    activeCorner.clear(); 
     if (indices.size() % 3 != 0) {
         std::cerr << "Error: The index data is not valid. Must be a multiple of 3 (triangles)." << std::endl;
         return;
@@ -249,13 +257,26 @@ void RegularGrid::voxelizeMesh(const std::vector<unsigned short>& indices, const
             }
         }
         // Utiliser la parité pour déterminer si le voxel est "à l'intérieur"
-        voxel.isEmpty = (intersectionCount % 2 == 0) ? 1 : 0; // Pair -> à l'extérieur
+        if(intersectionCount % 2 == 0){ // Pair -> à l'extérieur
+            voxel.isEmpty = 1; 
+        }else{
+            voxel.isEmpty = 0; 
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, -voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, -voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, -voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, -voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, voxel.halfSize)); 
+        }
     }
     std::cout << "Voxelization complete: " << voxels.size() << " voxels processed." << std::endl;
 }
 
 // Méthode de voxelisation de la surface du maillage
 void RegularGrid::voxelizeMeshSurface(const std::vector<unsigned short>& indices, const std::vector<glm::vec3>& vertices) {
+    activeCorner.clear(); 
     if (indices.size() % 3 != 0) {
         std::cerr << "Error: The index data is not valid. Must be a multiple of 3 (triangles)." << std::endl;
         return;
@@ -298,6 +319,15 @@ void RegularGrid::voxelizeMeshSurface(const std::vector<unsigned short>& indices
 
                     if (Grid::triangleIntersectsAABB(v0, v1, v2, boxCenter, boxHalfSize)) {
                         voxel.isEmpty = 0; // Marquer le voxel comme "touché"
+                        activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, -voxel.halfSize));
+                        activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, -voxel.halfSize));
+                        activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, voxel.halfSize));
+                        activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, voxel.halfSize));
+                        activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, -voxel.halfSize));
+                        activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, -voxel.halfSize));
+                        activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, voxel.halfSize));
+                        activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, voxel.halfSize)); 
+            
                     }
                 }
             }
@@ -309,7 +339,8 @@ void RegularGrid::voxelizeMeshSurface(const std::vector<unsigned short>& indices
 
 void RegularGrid::optimizedVoxelizeMesh(const std::vector<unsigned short>& indices, 
                                         const std::vector<glm::vec3>& vertices) {
-   if (indices.size() % 3 != 0) {
+    activeCorner.clear(); 
+    if (indices.size() % 3 != 0) {
         std::cerr << "Error: The index data is not valid. Must be a multiple of 3 (triangles)." << std::endl;
         return;
     }
@@ -328,13 +359,26 @@ void RegularGrid::optimizedVoxelizeMesh(const std::vector<unsigned short>& indic
     processRaycastingForAxis(indices, vertices, 0); // Axe X
     processRaycastingForAxis(indices, vertices, 1); // Axe Y
     processRaycastingForAxis(indices, vertices, 2); // Axe Z
+
     for (VoxelData &voxel : voxels) {
         voxel.isEmpty = voxel.isEmptyOnAxe.x == 1 || voxel.isEmptyOnAxe.y == 1 || voxel.isEmptyOnAxe.z == 1;
-        // if (voxel.isEmpty)
-        //     std::cout << voxel.isEmpty << ": " << voxel.isEmptyOnAxe.x << "; " << voxel.isEmptyOnAxe.y << "; " << voxel.isEmptyOnAxe.z << std::endl;
+        // On marque tous les bords du voxel comme actifs
+        if (!voxel.isEmpty){
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, -voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, -voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, -voxel.halfSize, voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, -voxel.halfSize, voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, -voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, -voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(voxel.halfSize, voxel.halfSize, voxel.halfSize));
+            activeCorner.push_back(voxel.center + glm::vec3(-voxel.halfSize, voxel.halfSize, voxel.halfSize)); 
+            
+        }
     }
+
     std::cout << "Optimized voxelization complete: " << voxels.size() << " voxels processed." << std::endl;
 }
+
 
 void RegularGrid::printGrid() const {
     // Dimensions de la grille
@@ -362,4 +406,74 @@ void RegularGrid::printGrid() const {
         std::cout << std::endl; // Séparer les couches de voxels
     }
 }
+void RegularGrid::marchingCube( std::vector<unsigned short> &indices, std::vector<glm::vec3> &vertices) {
+    removeDuplicates(activeCorner);
+
+    glm::vec3 gridSize = maxBounds - minBounds;
+    float voxelSize = std::min({gridSize.x / resolution, gridSize.y / resolution, gridSize.z / resolution});
+    float halfSize = voxelSize / 2;
+
+    // Parcours du volume de voxels
+    for (int x = 0; x < gridResolutionX + 2; ++x) {
+        for (int y = 0; y < gridResolutionY + 2; ++y) {
+            for (int z = 0; z < gridResolutionZ + 2; ++z) {
+                // Décalage des positions des voxels pour englober tous les voxels
+                glm::vec3 center = minBounds + glm::vec3(x - 1, y - 1, z - 1) * voxelSize + glm::vec3(halfSize);
+
+                glm::vec3 corners[8] = {
+                    center + glm::vec3(-halfSize, -halfSize, -halfSize),
+                    center + glm::vec3(halfSize, -halfSize, -halfSize),
+                    center + glm::vec3(halfSize, -halfSize, halfSize),
+                    center + glm::vec3(-halfSize, -halfSize, halfSize),
+                    center + glm::vec3(-halfSize, halfSize, -halfSize),
+                    center + glm::vec3(halfSize, halfSize, -halfSize),
+                    center + glm::vec3(halfSize, halfSize, halfSize),
+                    center + glm::vec3(-halfSize, halfSize, halfSize)
+                };
+
+                // Calcul du cube index pour identifier les coins "pleins"
+                int cubeIndex = 0;
+                for (int j = 0; j < 8; j++) {
+                    for (glm::vec3 key : activeCorner) {
+                        if (glm::distance(key, corners[j]) < 0.001f) {
+                            cubeIndex |= (1 << j);
+                            break;
+                        }
+                    }
+                }
+
+                // Récupérer la table de triangulation pour ce cube
+                const int* triangulationData = MarchingCubesTable::triangulation[cubeIndex];
+
+                // Traiter les triangles du cube
+                for (int k = 0; k < 16; k += 3) {
+                    if (triangulationData[k] == -1 || triangulationData[k + 1] == -1 || triangulationData[k + 2] == -1) {
+                        break; // Fin des triangles pour ce cube
+                    }
+
+                    // Récupérer les indices des coins à interpoler pour les 3 arêtes d'un triangle
+                    int a = MarchingCubesTable::cornerIndexAFromEdge[triangulationData[k]];
+                    int b = MarchingCubesTable::cornerIndexBFromEdge[triangulationData[k]];
+
+                    int a1 = MarchingCubesTable::cornerIndexAFromEdge[triangulationData[k + 1]];
+                    int b1 = MarchingCubesTable::cornerIndexBFromEdge[triangulationData[k + 1]];
+
+                    int a2 = MarchingCubesTable::cornerIndexAFromEdge[triangulationData[k + 2]];
+                    int b2 = MarchingCubesTable::cornerIndexBFromEdge[triangulationData[k + 2]];
+                    // addTriangle((corners[a] + corners[b]) * 0.5f, (corners[a1] + corners[b1]) * 0.5f, (corners[a2] + corners[b2]) * 0.5f, vertices, indices); 
+
+                    vertices.push_back((corners[a] + corners[b])*0.5f); 
+                    vertices.push_back((corners[a1] + corners[b1])*0.5f); 
+                    vertices.push_back((corners[a2] + corners[b2])*0.5f); 
+
+                    indices.push_back(vertices.size()-3);
+                    indices.push_back(vertices.size()-2);
+                    indices.push_back(vertices.size()-1);
+                   
+                }
+            }
+        }
+    }
+}
+
 

@@ -5,7 +5,7 @@ void Grid::initializeBuffers() {
     // if (VAO != 0) return; // Éviter une double initialisation
 
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &VBO);using Voxel = std::tuple<int, int, int>;
 
     glBindVertexArray(VAO);
 
@@ -91,9 +91,52 @@ bool Grid::testAxis(const glm::vec3& axis, const glm::vec3& t0, const glm::vec3&
 void Grid::draw(GLuint shaderID, glm::mat4 transformMat) {
     // std::cout << shaderID << std::endl;
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "model"), 1, GL_FALSE, &transformMat[0][0]); // Matrice de transformation
-    glUniform3f(glGetUniformLocation(shaderID, "objectColor"), 1.0, 1.0, 1.0); 
+    glUniform3fv(glGetUniformLocation(shaderID, "objectColor"), 1, &color[0]); // Couleur
     glBindVertexArray(VAO);
     glDrawArrays(GL_POINTS, 0, voxels.size());
-
     glBindVertexArray(0);
 }
+
+void Grid::setColor(glm::vec3 c){
+    color = c; 
+}
+
+
+void Grid::removeDuplicates(std::vector<glm::vec3>& activeCorner) {
+    // Utilisation d'un set pour enlever les doublons
+    std::set<glm::vec3> uniqueCorners(activeCorner.begin(), activeCorner.end());
+
+    // Remettre les éléments uniques dans le vecteur
+    activeCorner.assign(uniqueCorners.begin(), uniqueCorners.end());
+}
+
+
+void Grid::createOffFile(std::vector<unsigned short> &indices, std::vector<glm::vec3> &vertices, std::string& filename){
+    std::ofstream outFile(filename);
+    if (!outFile) {
+        std::cerr << "Erreur : impossible d'ouvrir le fichier pour écrire les données OFF." << std::endl;
+        return;
+    }
+
+    // Écriture de l'en-tête OFF
+    outFile << "OFF\n";
+    outFile << vertices.size() << " " << (indices.size() / 3) << " 0\n"; // Nb de sommets, faces, arêtes
+
+    // Écriture des sommets
+    for (const auto &vertex : vertices) {
+        outFile << vertex.x << " " << vertex.y << " " << vertex.z << "\n";
+    }
+
+    // Écriture des faces
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        outFile << "3 " << indices[i] << " " << indices[i + 1] << " " << indices[i + 2] << "\n";
+    }
+
+    outFile.close();
+    std::cout << "vertices = " << vertices.size() << std::endl; 
+    std::cout << "indices = " << indices.size() << std::endl; 
+    std::cout << "Fichier OFF généré avec succès : output.off" << std::endl;
+}
+
+
+

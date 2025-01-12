@@ -27,7 +27,6 @@ private :
     
 
 public :
-    RegularGrid grid; 
     Mesh(std::string name, const char *path, int textureID, const char *texturePath, Shader &shader);
     Mesh(std::string name, const char *path, glm::vec4 color, Shader &shader);
 

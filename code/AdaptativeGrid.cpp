@@ -26,8 +26,8 @@ AdaptativeGrid::AdaptativeGrid(const std::vector<unsigned short>& indices, const
 
     root = std::make_unique<OctreeNode>(minBounds, maxBounds);
     voxelizeMesh(indices, vertices);
-    root->print();
-    printGrid();
+    // root->print();
+    // printGrid();
     Grid::initializeBuffers();
 }
 
@@ -44,6 +44,7 @@ void AdaptativeGrid::fillVoxelDataRecursive(const OctreeNode& node) {
         //     << size.y << ", " 
         //     << size.z << ")" << std::endl;
         voxels.emplace_back(VoxelData{center, size.x, 0}); // 0 si le nœud est rempli
+
     } else {
         // Parcourez les enfants si ce n'est pas une feuille
         for (const auto& child : node.children) {
@@ -113,3 +114,75 @@ void AdaptativeGrid::printGrid() const {
     }
 }
 
+void AdaptativeGrid::marchOctreeNode(OctreeNode* node, std::vector<unsigned short>& indices, std::vector<glm::vec3>& vertices) {
+    // Si le nœud est une feuille, on traite sa voxelisations
+    if (node->isLeaf) {
+        glm::vec3 gridSize = node->maxBounds - node->minBounds;
+        float voxelSize = gridSize.x;
+        float halfSize = voxelSize / 2;
+
+        glm::vec3 center = (node->minBounds + node->maxBounds) * 0.5f;
+        
+        glm::vec3 corners[8] = {
+            center + glm::vec3(-halfSize, -halfSize, -halfSize),
+            center + glm::vec3(halfSize, -halfSize, -halfSize),
+            center + glm::vec3(halfSize, -halfSize, halfSize),
+            center + glm::vec3(-halfSize, -halfSize, halfSize),
+            center + glm::vec3(-halfSize, halfSize, -halfSize),
+            center + glm::vec3(halfSize, halfSize, -halfSize),
+            center + glm::vec3(halfSize, halfSize, halfSize),
+            center + glm::vec3(-halfSize, halfSize, halfSize)
+        };
+
+        // Calcul du cube index pour identifier les coins "pleins"
+        int cubeIndex = 0;
+        for (int j = 0; j < 8; j++) {
+            for (const glm::vec3& key : activeCorner) {
+                if (glm::distance(key, corners[j]) < 0.001f) {
+                    cubeIndex |= (1 << j);
+                    break;
+                }
+            }
+        }
+
+        // Récupérer la table de triangulation pour ce cube
+        const int* triangulationData = MarchingCubesTable::triangulation[cubeIndex];
+
+        // Traiter les triangles du cube
+        for (int k = 0; k < 16; k += 3) {
+            if (triangulationData[k] == -1 || triangulationData[k + 1] == -1 || triangulationData[k + 2] == -1) {
+                break; // Fin des triangles pour ce cube
+            }
+
+            // Récupérer les indices des coins à interpoler pour les 3 arêtes d'un triangle
+            int a = MarchingCubesTable::cornerIndexAFromEdge[triangulationData[k]];
+            int b = MarchingCubesTable::cornerIndexBFromEdge[triangulationData[k]];
+
+            int a1 = MarchingCubesTable::cornerIndexAFromEdge[triangulationData[k + 1]];
+            int b1 = MarchingCubesTable::cornerIndexBFromEdge[triangulationData[k + 1]];
+
+            int a2 = MarchingCubesTable::cornerIndexAFromEdge[triangulationData[k + 2]];
+            int b2 = MarchingCubesTable::cornerIndexBFromEdge[triangulationData[k + 2]];
+
+            // Ajouter les sommets à la liste des vertices
+            vertices.push_back((corners[a] + corners[b]) * 0.5f);
+            vertices.push_back((corners[a1] + corners[b1]) * 0.5f);
+            vertices.push_back((corners[a2] + corners[b2]) * 0.5f);
+
+            // Ajouter les indices des triangles
+            indices.push_back(vertices.size() - 3);
+            indices.push_back(vertices.size() - 2);
+            indices.push_back(vertices.size() - 1);
+        }
+    } else {
+        // Si ce n'est pas une feuille, subdivisez et traitez les enfants
+        for (auto& child : node->children) {
+            marchOctreeNode(&child, indices, vertices);
+        }
+    }
+}
+
+void AdaptativeGrid::marchingCube( std::vector<unsigned short> &indices, std::vector<glm::vec3> &vertices) {
+    removeDuplicates(activeCorner);
+    marchOctreeNode(root.get(), indices, vertices);
+}

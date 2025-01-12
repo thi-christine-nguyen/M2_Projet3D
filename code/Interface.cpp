@@ -243,6 +243,121 @@ void Interface::addGameObject(float _deltaTime, GLFWwindow* _window){
     }
 }
 
+void voxelInterface(Mesh* mesh){
+    ImGui::Separator();
+    ImGui::Text("Type de Grille");
+    const char* gridTypeNames[] = { "Regular Grid", "Adaptative Grid" };
+    int currentGridType = static_cast<int>(mesh->getGridType());
+
+    if (ImGui::Combo(("##" + std::to_string(mesh->getId()) + "GridType").c_str(), &currentGridType, gridTypeNames, IM_ARRAYSIZE(gridTypeNames))) {
+        mesh->setGridType(static_cast<GridType>(currentGridType));
+    }
+
+    ImGui::Separator();
+
+    ImGui::Text("Resolution de voxelisation");
+    ImGui::SliderInt(("##" + std::to_string(mesh->getId()) + "VoxelResolution").c_str(), &mesh->getVoxelResolution(), 2, 30);
+
+    // Liste des méthodes de voxélisation
+    static int selectedMethod = 0; // Indice de la méthode sélectionnée
+    
+    ImGui::Text("Méthodes de voxélisation");
+    if(mesh->getGridType() == GridType::Regular){
+        const char* voxelMethods[] = { "Optimized", "Simple", "Surface" };
+        ImGui::Combo(("##" + std::to_string(mesh->getId()) + "VoxelMethod").c_str(), &selectedMethod, voxelMethods, IM_ARRAYSIZE(voxelMethods));
+
+    }
+
+    // Bouton pour voxeliser
+    if (ImGui::Button(("Voxeliser ##" + std::to_string(mesh->getId())).c_str())) {
+        if (mesh->getVoxelResolution() > 0) {
+            VoxelizationMethod method = (selectedMethod == 0) ? VoxelizationMethod::Optimized :
+                                         (selectedMethod == 1) ? VoxelizationMethod::Simple :
+                                         VoxelizationMethod::Surface;
+
+            if (mesh->getGridType() == GridType::Regular) {
+                mesh->setGrid(std::make_unique<RegularGrid>(mesh->getIndices(), mesh->getVertices(), mesh->getVoxelResolution(), method));
+            } else {
+                mesh->setGrid(std::make_unique<AdaptativeGrid>(mesh->getIndices(), mesh->getVertices(), mesh->getVoxelResolution(), method));
+            }
+
+            // grid->marchingCubeInterface(); 
+            mesh->setShowVoxel(true);
+            mesh->setGridInitialized(true); 
+        }
+    }
+
+    if (mesh->isGridInitialized()){
+        
+        ImGui::Text("Color RGB (0-256)");
+        static float colorWheel[3] = {1.0f, 1.0f, 1.0f};  // Valeurs normalisées de 0 à 1
+        static bool colorPopupOpen = false;
+
+        // Bouton pour ouvrir la roue de couleurs
+        if (ImGui::Button(("Choose a color ## voxel" + std::to_string(mesh->getId())).c_str())) {
+            ImGui::OpenPopup(("ColorPickerPopup ## voxel" + std::to_string(mesh->getId())).c_str());
+        }
+
+        // Pop-up de sélection de couleur
+        if (ImGui::BeginPopup(("ColorPickerPopup ## voxel" + std::to_string(mesh->getId())).c_str())) {
+            ImGui::Text("Choose a color");
+            ImGui::Separator();
+
+            // Affiche la roue de couleur
+            ImGui::ColorPicker3(("Color ## voxel" + std::to_string(mesh->getId())).c_str(), colorWheel);
+
+            ImGui::Separator();
+            if (ImGui::Button(("OK ## voxel" + std::to_string(mesh->getId())).c_str(), ImVec2(120, 0))) {
+                glm::vec3 selectedColor(colorWheel[0], colorWheel[1], colorWheel[2]);
+                mesh->getGrid()->setColor(selectedColor);
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+    }
+    ImGui::Checkbox(("Afficher le Mesh ##" + std::to_string(mesh->getId())).c_str(), &mesh->isShowMesh());
+    ImGui::Checkbox(("Afficher le Mesh Wireframe ##" + std::to_string(mesh->getId())).c_str(), &mesh->getIsWireframe());
+
+    ImGui::Checkbox(("Afficher en Voxel ##" + std::to_string(mesh->getId())).c_str(), &mesh->isShowVoxel());
+    ImGui::Checkbox(("Afficher Voxel en Wireframe ##" + std::to_string(mesh->getId())).c_str(), &mesh->getIsWireframeVoxel());
+}
+
+
+void marchingCubeInterface(Mesh* mesh){
+    ImGui::Separator();
+    ImGui::Text("Marching Cubes and OFF Export");
+    static bool isMarchingCubeExecuted = false;
+    static std::vector<unsigned short> indices;
+    static std::vector<glm::vec3> vertices;
+
+    // Bouton pour exécuter l'algorithme Marching Cubes
+    if (ImGui::Button("Run Marching Cubes")) {
+        indices.clear(); 
+        vertices.clear(); 
+
+        // Vérifie si la grille est initialisée avant d'exécuter Marching Cubes
+        if (mesh->isGridInitialized()) {
+            mesh->getGrid()->marchingCube(indices, vertices);
+
+            std::cout << "Marching Cubes executed successfully!" << std::endl;
+            isMarchingCubeExecuted = true;
+        } else {
+            ImGui::Text("Grid not initialized or missing!");
+        }
+    }
+    if (isMarchingCubeExecuted) {
+        static char filename[128] = "../data/meshes/output.off";
+        ImGui::InputText("Filename", filename, IM_ARRAYSIZE(filename));
+
+        ImGui::SameLine(); 
+        if (ImGui::Button("Export OFF File")) {
+            std::string file = filename;
+            mesh->getGrid()->createOffFile(indices, vertices, file);
+        }
+    }
+}
+
+
 void Interface::updateInterface(float _deltaTime, GLFWwindow* _window)
 {
 
@@ -273,9 +388,9 @@ void Interface::updateInterface(float _deltaTime, GLFWwindow* _window)
 
                 if (isOpen) {
                     ImGui::Text("Object Name: %s", objectName.c_str());
-                    // Récupère l'interface dans le gameObject pour la modification du transform
-                    // object->updateInterfaceTransform(_deltaTime); 
                     meshObject->updateInterfaceTransform(_deltaTime); 
+                    voxelInterface(meshObject); 
+                    if(meshObject->isGridInitialized()){marchingCubeInterface(meshObject);}
                 }
             }
             if (ImGui::CollapsingHeader("Add")) {

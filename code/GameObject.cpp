@@ -146,6 +146,9 @@ void GameObject::draw(Shader &shader)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
     glEnableVertexAttribArray(0);
 
+    // glPointSize(10.0f);
+    // glDrawArrays(GL_POINTS, 0, vertices.size());
+
     glBindBuffer(GL_ARRAY_BUFFER, vboUV);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
     glEnableVertexAttribArray(1);
@@ -221,54 +224,6 @@ void GameObject::updateInterfaceTransform(float _deltaTime) {
     if (ImGui::Button(("Reset " + std::to_string(id) + " Parameters").c_str())) {
         resetParameters();
     }
-
-    ImGui::Separator();
-    ImGui::Text("Type de Grille");
-    const char* gridTypeNames[] = { "Regular Grid", "Adaptative Grid" };
-    int currentGridType = static_cast<int>(gridType);
-
-    if (ImGui::Combo(("##" + std::to_string(id) + "GridType").c_str(), &currentGridType, gridTypeNames, IM_ARRAYSIZE(gridTypeNames))) {
-        gridType = static_cast<GridType>(currentGridType);
-    }
-
-    ImGui::Separator();
-
-    ImGui::Text("Resolution de voxelisation");
-    ImGui::SliderInt(("##" + std::to_string(id) + "VoxelResolution").c_str(), &voxelResolution, 2, 20);
-
-    // Liste des méthodes de voxélisation
-    static int selectedMethod = 0; // Indice de la méthode sélectionnée
-    
-    ImGui::Text("Méthodes de voxélisation");
-    if(gridType == GridType::Regular){
-        const char* voxelMethods[] = { "Optimized", "Simple", "Surface" };
-        ImGui::Combo(("##" + std::to_string(id) + "VoxelMethod").c_str(), &selectedMethod, voxelMethods, IM_ARRAYSIZE(voxelMethods));
-
-    }
-   
-    // Bouton pour voxeliser
-    if (ImGui::Button(("Voxeliser ##" + std::to_string(id)).c_str())) {
-        if (voxelResolution > 0) {
-            VoxelizationMethod method = (selectedMethod == 0) ? VoxelizationMethod::Optimized :
-                                         (selectedMethod == 1) ? VoxelizationMethod::Simple :
-                                         VoxelizationMethod::Surface;
-
-            if (gridType == GridType::Regular) {
-                grid = std::make_unique<RegularGrid>(indices, vertices, voxelResolution, method);
-            } else {
-                grid = std::make_unique<AdaptativeGrid>(indices, vertices, voxelResolution, method);
-            }
-            showVoxel = true;
-            gridInitialized = true; 
-        }
-    }
-    
-    ImGui::Checkbox(("Afficher le Mesh ##" + std::to_string(id)).c_str(), &showMesh);
-    ImGui::Checkbox(("Afficher le Mesh Wireframe ##" + std::to_string(id)).c_str(), &isWireframe);
-
-    ImGui::Checkbox(("Afficher en Voxel ##" + std::to_string(id)).c_str(), &showVoxel);
-    ImGui::Checkbox(("Afficher Voxel en Wireframe ##" + std::to_string(id)).c_str(), &isWireframeVoxel);
-
 }
 
 void GameObject::drawVoxel(Shader &shader) {
@@ -281,17 +236,4 @@ void GameObject::drawVoxel(Shader &shader) {
     if(gridInitialized) {
         grid->draw(shader.ID, transform.getMatrix());
     }
-}
-
-bool GameObject::getIsWireframe(){
-    return isWireframe; 
-}
-bool GameObject::getIsWireframeVoxel(){
-    return isWireframeVoxel; 
-}
-bool GameObject::getShowMesh(){
-    return showMesh; 
-}
-bool GameObject::getShowVoxel(){
-    return showVoxel; 
 }

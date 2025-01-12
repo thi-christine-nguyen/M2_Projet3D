@@ -6,6 +6,16 @@
 #include <GL/glew.h>
 #include <algorithm>
 #include <iostream>
+#include <unordered_map>
+#include <fstream>
+#include <array>
+#include <glm/gtx/string_cast.hpp>
+#include <unordered_map>
+#include <functional>
+#include <unordered_set>
+#include <set>
+#include "MarchingCubesTable.hpp"
+
 
 enum class VoxelizationMethod {
     Simple,      // Voxelisation complète (avec intérieur)
@@ -18,10 +28,23 @@ struct VoxelData {
     float halfSize;     // Moitié de la taille du voxel
     int isEmpty;
     glm::vec3 isEmptyOnAxe;
+    std::array<int, 8> edge = {0, 0, 0, 0, 0, 0, 0, 0};
 
     VoxelData(const glm::vec3& c, float hs, bool ie)
         : center(c), halfSize(hs), isEmpty(ie) {}
 };
+
+namespace std {
+    template <>
+    struct less<glm::vec3> {
+        bool operator()(const glm::vec3& a, const glm::vec3& b) const {
+            // Comparer d'abord sur l'axe X, puis Y, puis Z si nécessaire
+            if (a.x != b.x) return a.x < b.x;
+            if (a.y != b.y) return a.y < b.y;
+            return a.z < b.z;
+        }
+    };
+}
 
 class Grid {
 protected:
@@ -33,6 +56,9 @@ protected:
 
     std::vector<VoxelData> voxels; // Liste des voxels
     GLuint VAO, VBO;           // Buffers OpenGL pour les voxels
+    glm::vec3 color {1.f, 1.f, 1.f};
+
+    std::vector<glm::vec3> activeCorner; 
 
 public:
     Grid() {};
@@ -47,7 +73,14 @@ public:
                                          const glm::vec3& boxCenter, const glm::vec3& boxHalfSize) const;
     bool testAxis(const glm::vec3& axis, const glm::vec3& t0, const glm::vec3& t1, const glm::vec3& t2,
                            const glm::vec3& boxHalfSize) const;
-   
+    void setColor(glm::vec3 c);
+
+    virtual void marchingCube( std::vector<unsigned short> &indices, std::vector<glm::vec3> &vertices) {
+        std::cerr << "Marching Cubes not implemented." << std::endl;
+    }
+    void removeDuplicates(std::vector<glm::vec3>& activeCorner);
+    void createOffFile(std::vector<unsigned short> &indices, std::vector<glm::vec3> &vertices, std::string& filename);
+
     virtual ~Grid() = default;
 };
 

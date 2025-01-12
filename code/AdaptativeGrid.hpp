@@ -118,6 +118,8 @@ public:
     void voxelizeNode(OctreeNode& node, const std::vector<unsigned short>& indices,
                     const std::vector<glm::vec3>& vertices, int depth);
     void fillVoxelDataRecursive(const OctreeNode& node);
+    void marchingCube( std::vector<unsigned short> &indices, std::vector<glm::vec3> &vertices) override;
+    void marchOctreeNode(OctreeNode* node, std::vector<unsigned short>& indices, std::vector<glm::vec3>& vertices);
 
     virtual ~AdaptativeGrid() = default;
 };
