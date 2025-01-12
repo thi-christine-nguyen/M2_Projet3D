@@ -141,10 +141,26 @@ public:
     void resetParameters();
     void updateInterfaceTransform(float _deltaTime);
 
-    bool getIsWireframe();
-    bool getIsWireframeVoxel(); 
-    bool getShowMesh(); 
-    bool getShowVoxel(); 
+    bool isScaleLocked() const { return scaleLocked_; }
+    bool& getIsWireframe()  { return isWireframe; }
+    bool& getIsWireframeVoxel()  { return isWireframeVoxel; }
+    bool& isShowMesh()  { return showMesh; }
+    bool& isShowVoxel()  { return showVoxel; }
+     Grid* getGrid()  { return grid.get(); }
+    GridType getGridType()  { return gridType; }
+    int getId() { return id; }
+    int& getVoxelResolution() {return voxelResolution;}
+    bool isGridInitialized()  { return gridInitialized; }
+
+    void setGrid(std::unique_ptr<Grid> newGrid) {grid = std::move(newGrid); }
+
+    // Setter pour gridType
+    void setGridType(GridType newGridType) {gridType = newGridType; }
+
+    // Setter pour voxelResolution
+    void setVoxelResolution(int newVoxelResolution) {voxelResolution = newVoxelResolution;}
+    void setShowVoxel(bool set){showVoxel = set; }
+    void setGridInitialized(bool set) {gridInitialized = set; }
 
 
     /* ------------------------- DESTRUCTOR -------------------------*/
