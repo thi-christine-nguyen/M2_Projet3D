@@ -17,7 +17,9 @@
 #include <set>
 #include "MarchingCubesTable.hpp"
 
-const float EPSILON = 1e-6f;
+const float LITTLE_EPSILON = 1e-6f;
+const float EPSILON = 1e-4f;
+const float BIG_EPSILON = 1e-2f;
 
 enum class VoxelizationMethod {
     Simple,      // Voxelisation complète (avec intérieur)

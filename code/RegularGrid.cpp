@@ -252,13 +252,12 @@ void RegularGrid::update(float deltaTime, GLFWwindow* window) {
 
 bool RegularGrid::intersectRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDir, 
                         const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, float& t) {
-    const float EPSILON = 1e-6f;
     glm::vec3 edge1 = v1 - v0;
     glm::vec3 edge2 = v2 - v0;
     glm::vec3 h = glm::cross(rayDir, edge2);
     float a = glm::dot(edge1, h);
     
-    if (a > -EPSILON && a < EPSILON) return false; // Rayon parallèle au triangle
+    if (a > -LITTLE_EPSILON && a < LITTLE_EPSILON) return false; // Rayon parallèle au triangle
     float f = 1.0f / a;
     glm::vec3 s = rayOrigin - v0;
     float u = f * glm::dot(s, h);
@@ -267,7 +266,7 @@ bool RegularGrid::intersectRayTriangle(const glm::vec3& rayOrigin, const glm::ve
     float v = f * glm::dot(rayDir, q);
     if (v < 0.0f || u + v > 1.0f) return false;
     t = f * glm::dot(edge2, q);
-    return t > EPSILON; // Intersection trouvée
+    return t > LITTLE_EPSILON; // Intersection trouvée
 }
 
 void RegularGrid::processRaycastingForAxis(const std::vector<unsigned short>& indices,
@@ -298,16 +297,15 @@ void RegularGrid::processRaycastingForAxis(const std::vector<unsigned short>& in
             // Origine du rayon : premier voxel dans la colonne
             glm::vec3 rayOrigin;
             glm::vec3 rayDir;
-            const float EPSILON = 1e-6f;
 
             if (projectionAxis == 0) {
                 rayOrigin = getVoxel(0, i, j).center - glm::vec3(getVoxel(0, i, j).halfSize + EPSILON, 0.0f, 0.0f);
                 rayDir = glm::vec3(1.0f, 0.0f, 0.0f);
             } else if (projectionAxis == 1) {
-                rayOrigin = getVoxel(i, 0, j).center - glm::vec3(0.0f, getVoxel(0, i, j).halfSize + EPSILON, 0.0f);
+                rayOrigin = getVoxel(i, 0, j).center - glm::vec3(0.0f, getVoxel(i, 0, j).halfSize + EPSILON, 0.0f);
                 rayDir = glm::vec3(0.0f, 1.0f, 0.0f);
             } else if (projectionAxis == 2) {
-                rayOrigin = getVoxel(i, j, 0).center - glm::vec3(0.0f, 0.0f, getVoxel(0, i, j).halfSize + EPSILON);
+                rayOrigin = getVoxel(i, j, 0).center - glm::vec3(0.0f, 0.0f, getVoxel(i, j, 0).halfSize + EPSILON);
                 rayDir = glm::vec3(0.0f, 0.0f, 1.0f);
             }
 
@@ -452,7 +450,7 @@ void RegularGrid::voxelizeMeshSurface(const std::vector<unsigned short>& indices
 
                     VoxelData& voxel = voxels[voxelIndex];
                     glm::vec3 boxCenter = voxel.center;
-                    glm::vec3 boxHalfSize(voxel.halfSize);
+                    glm::vec3 boxHalfSize(voxel.halfSize + EPSILON);
 
                     if (Grid::triangleIntersectsAABB(v0, v1, v2, boxCenter, boxHalfSize)) {
                         voxel.isEmpty = 0; // Marquer le voxel comme "touché"
