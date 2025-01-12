@@ -146,7 +146,7 @@ public:
     bool& getIsWireframeVoxel()  { return isWireframeVoxel; }
     bool& isShowMesh()  { return showMesh; }
     bool& isShowVoxel()  { return showVoxel; }
-     Grid* getGrid()  { return grid.get(); }
+    Grid* getGrid()  { return grid.get(); }
     GridType getGridType()  { return gridType; }
     int getId() { return id; }
     int& getVoxelResolution() {return voxelResolution;}

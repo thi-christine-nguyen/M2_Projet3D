@@ -12,7 +12,7 @@ void Grid::initializeBuffers() {
     // Préparer les données des voxels
     std::vector<VoxelData> bufferData;
     for (const auto& voxel : voxels) {
-        bufferData.emplace_back(voxel.center, voxel.halfSize, voxel.isEmpty);
+        bufferData.emplace_back(voxel.center, voxel.halfSize, voxel.isEmpty, voxel.isSelected);
         // std::cout << voxel.isEmpty << std::endl;
         // std::cout << "center={" << bufferData.back().center.x << ", " << bufferData.back().center.y << ", " << bufferData.back().center.z << "} halfSize=" << bufferData.back().halfSize << std::endl;
     }
@@ -28,6 +28,9 @@ void Grid::initializeBuffers() {
 
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 1, GL_INT, GL_FALSE, sizeof(VoxelData), (void*)offsetof(VoxelData, isEmpty));
+
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, sizeof(VoxelData), (void*)offsetof(VoxelData, isSelected));
 
     // glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);

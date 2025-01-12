@@ -10,6 +10,10 @@ uniform vec3 viewPos;     // Position de la caméra dans l'espace monde
 uniform vec3 lightColor;  // Couleur de la lumière
 uniform vec3 objectColor; // Couleur de l'objet
 
+// Entrées depuis le Geometry Shader
+// flat in float isSelected;
+flat in int isSelected;  // Valeur venant du Geometry Shader
+
 // Sortie
 out vec4 FragColor;
 
@@ -34,7 +38,7 @@ void main() {
     vec3 specular = specularStrength * spec * lightColor;
 
     // Combinaison des résultats
-    vec3 result = (ambient + diffuse + specular) * objectColor;
+    vec3 result = ((isSelected != 0 ? vec3(1.0, 0.0, 0.0) : ambient) + diffuse + specular) * objectColor;
 
     // Couleur finale
     FragColor = vec4(result, 1.0);

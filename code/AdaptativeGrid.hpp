@@ -10,7 +10,7 @@ struct OctreeNode {
     std::vector<OctreeNode> children;   // Enfants du nœud (8 max)
 
     OctreeNode(const glm::vec3& minBounds, const glm::vec3& maxBounds)
-        : minBounds(minBounds), maxBounds(maxBounds), isLeaf(true) {}
+        : minBounds(minBounds - EPSILON), maxBounds(maxBounds + EPSILON), isLeaf(true) {}
 
     void subdivide() {
         glm::vec3 size = (maxBounds - minBounds) * 0.5f;

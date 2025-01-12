@@ -43,7 +43,7 @@ void AdaptativeGrid::fillVoxelDataRecursive(const OctreeNode& node) {
         //     << size.x << ", " 
         //     << size.y << ", " 
         //     << size.z << ")" << std::endl;
-        voxels.emplace_back(VoxelData{center, size.x, 0}); // 0 si le nœud est rempli
+        voxels.emplace_back(VoxelData{center, size.x, 0, 0}); // 0 si le nœud est rempli
 
     } else {
         // Parcourez les enfants si ce n'est pas une feuille

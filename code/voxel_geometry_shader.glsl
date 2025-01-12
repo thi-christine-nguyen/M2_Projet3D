@@ -8,12 +8,14 @@ in VS_OUT {
     vec4 center;      // Centre en espace local
     float halfSize;   // Taille (demi-côté du voxel)
     int isEmpty;
+    int isSelected;
 } gs_in[];
 
 // Sorties pour le Fragment Shader
 out vec3 fNormal;          // Normale pour chaque face
 out vec3 fWorldPosition;   // Position dans l'espace monde (pour debug ou shading)
-out vec3 n; 
+out vec3 n;
+flat out int isSelected;  // Passer l'int (0 ou 1) au Fragment Shader
 
 // Uniformes pour les matrices
 uniform mat4 model;         // Matrice modèle
@@ -29,7 +31,7 @@ void EmitVertexWithNormal(vec3 position, vec3 normal) {
 }
 
 // Fonction pour générer un cube centré sur `center` avec un rayon `halfSize`
-void generateCube(vec3 center, float halfSize) {
+void generateCube(vec3 _center, float _halfSize, int _isSelected) {
     // Les 8 sommets du cube, définis par leur offset relatif
     vec3 offsets[8] = vec3[](
         vec3(-1, -1, -1),  // 0 : arrière-bas-gauche
@@ -69,7 +71,8 @@ void generateCube(vec3 center, float halfSize) {
         // Émettre les 4 sommets pour la face
         for (int i = 0; i < 4; ++i) {
             int vertexIndex = indices[face * 4 + i];
-            vec3 vertex = center + offsets[vertexIndex] * halfSize;
+            vec3 vertex = _center + offsets[vertexIndex] * _halfSize;
+            isSelected = gs_in[0].isSelected;
             EmitVertexWithNormal(vertex, normal);
         }
 
@@ -84,6 +87,7 @@ void main() {
     vec3 worldCenter = (model * gs_in[0].center).xyz;
 
     // Générer un cube à partir du centre et de la demi-taille
-    if (gs_in[0].isEmpty == 0)
-        generateCube(worldCenter, gs_in[0].halfSize);
+    if (gs_in[0].isEmpty == 0 || gs_in[0].isSelected != 0)
+        generateCube(worldCenter, gs_in[0].halfSize, gs_in[0].isSelected);
+        // generateCube(worldCenter, gs_in[0].halfSize);
 }

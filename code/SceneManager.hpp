@@ -18,7 +18,7 @@ public:
     void addObject(std::unique_ptr<GameObject> object);
 
     // Méthode pour mettre à jour tous les objets de la scène
-    void update(float deltaTime);
+    void update(float deltaTime, GLFWwindow* window);
 
     // Méthode pour afficher tous les objets de la scène
     void draw(Shader &shader);

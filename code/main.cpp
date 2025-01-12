@@ -146,7 +146,7 @@ int main( void )
         camera.update(deltaTime, window); 
         camera.sendToShader(shader.ID, aspectRatio);
 
-        SM->update(deltaTime);
+        SM->update(deltaTime, window);
         SM->draw(shader);
 
 

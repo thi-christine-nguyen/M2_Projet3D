@@ -7,10 +7,12 @@ void SceneManager::addObject(std::unique_ptr<GameObject> object) {
 }
 
 // Méthode pour mettre à jour tous les objets de la scène
-void SceneManager::update(float deltaTime) {
+void SceneManager::update(float deltaTime, GLFWwindow* window) {
     for (const auto& object : objects) {
         // Mettre à jour l'objet
         object->update(deltaTime);
+        if (object->isGridInitialized())
+            object->getGrid()->update(deltaTime, window);
     }
 }
 

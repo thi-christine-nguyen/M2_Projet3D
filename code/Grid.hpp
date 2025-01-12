@@ -4,11 +4,12 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <array>
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
 #include <fstream>
-#include <array>
 #include <glm/gtx/string_cast.hpp>
 #include <unordered_map>
 #include <functional>
@@ -16,6 +17,7 @@
 #include <set>
 #include "MarchingCubesTable.hpp"
 
+const float EPSILON = 1e-6f;
 
 enum class VoxelizationMethod {
     Simple,      // Voxelisation complète (avec intérieur)
@@ -27,11 +29,14 @@ struct VoxelData {
     glm::vec3 center;   // Centre du voxel
     float halfSize;     // Moitié de la taille du voxel
     int isEmpty;
+    int isSelected;
     glm::vec3 isEmptyOnAxe;
     std::array<int, 8> edge = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    VoxelData(const glm::vec3& c, float hs, bool ie)
-        : center(c), halfSize(hs), isEmpty(ie) {}
+    VoxelData() {}
+
+    VoxelData(const glm::vec3& c, float hs, int ie, int is)
+        : center(c), halfSize(hs), isEmpty(ie), isSelected(is) {}
 };
 
 namespace std {
@@ -59,11 +64,13 @@ protected:
     glm::vec3 color {1.f, 1.f, 1.f};
 
     std::vector<glm::vec3> activeCorner; 
+    VoxelData *selectedVoxel;
 
 public:
     Grid() {};
     Grid(const glm::vec3& minBounds, const glm::vec3& maxBounds, int resolution, VoxelizationMethod method)
-        : minBounds(minBounds), maxBounds(maxBounds), resolution(resolution), method(method) {}
+        : minBounds(minBounds), maxBounds(maxBounds), resolution(resolution), method(method) {
+        }
 
     void initializeBuffers();    // Prépare les buffers OpenGL
 
@@ -74,6 +81,9 @@ public:
     bool testAxis(const glm::vec3& axis, const glm::vec3& t0, const glm::vec3& t1, const glm::vec3& t2,
                            const glm::vec3& boxHalfSize) const;
     void setColor(glm::vec3 c);
+    virtual void update(float deltaTime, GLFWwindow* window) {
+        std::cerr << "Marching Cubes not implemented." << std::endl;
+    }
 
     virtual void marchingCube( std::vector<unsigned short> &indices, std::vector<glm::vec3> &vertices) {
         std::cerr << "Marching Cubes not implemented." << std::endl;
