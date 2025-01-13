@@ -63,7 +63,7 @@ protected:
 
     std::vector<VoxelData> voxels; // Liste des voxels
     GLuint VAO, VBO;           // Buffers OpenGL pour les voxels
-    glm::vec3 color {1.f, 1.f, 1.f};
+    glm::vec3 color {0.5f, 0.5f, 0.5f};
 
     std::vector<glm::vec3> activeCorner; 
     VoxelData *selectedVoxel;

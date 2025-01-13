@@ -256,7 +256,7 @@ void voxelInterface(Mesh* mesh){
     ImGui::Separator();
 
     ImGui::Text("Resolution de voxelisation");
-    ImGui::SliderInt(("##" + std::to_string(mesh->getId()) + "VoxelResolution").c_str(), &mesh->getVoxelResolution(), 2, 30);
+    ImGui::SliderInt(("##" + std::to_string(mesh->getId()) + "VoxelResolution").c_str(), &mesh->getVoxelResolution(), 2, 50);
 
     // Liste des méthodes de voxélisation
     static int selectedMethod = 0; // Indice de la méthode sélectionnée

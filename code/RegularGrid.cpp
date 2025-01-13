@@ -108,6 +108,14 @@ int RegularGrid::getColumnIndex(const VoxelData& voxel, int projectionAxis) cons
 }
 
 int RegularGrid::getVoxelIndex(int x, int y, int z) const {
+    // Vérifiez si les coordonnées sont en dehors des limites
+    if (x < 0 || x >= gridResolutionX || 
+        y < 0 || y >= gridResolutionY || 
+        z < 0 || z >= gridResolutionZ) {
+        return -1; // Retourne -1 si hors limites
+    }
+
+    // Si les coordonnées sont valides, calculer l'indice
     return x * gridResolutionY * gridResolutionZ + y * gridResolutionZ + z;
 }
 
@@ -542,6 +550,7 @@ void RegularGrid::printGrid() const {
     }
 }
 void RegularGrid::marchingCube( std::vector<unsigned short> &indices, std::vector<glm::vec3> &vertices) {
+
     removeDuplicates(activeCorner);
 
     glm::vec3 gridSize = maxBounds - minBounds;

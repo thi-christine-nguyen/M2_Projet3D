@@ -80,7 +80,7 @@ int main( void )
     SceneManager *SM = new SceneManager();
 
 
-    Mesh *mesh = new Mesh("patate", "../data/meshes/sphere.off", glm::vec4(1.0f), shader);
+    Mesh *mesh = new Mesh("mesh", "../data/meshes/sphere.off", glm::vec4(1.0f), shader);
     mesh->setInitalTransform(mesh->getTransform());
     SM->addObject(std::move(mesh->ptr));
 
